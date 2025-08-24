@@ -241,7 +241,8 @@ export const LandingPage: React.FC = () => {
                 <Button
                   size="lg"
                   onClick={() => setShowAuthModal(true)}
-                  className="w-full sm:w-auto px-8 py-3 text-lg bg-white text-blue-600 hover:bg-gray-100"
+                  className="w-full sm:w-auto px-8 py-3 text-lg"
+                  variant="secondary"
                 >
                   Get Started Free
                   <ArrowRight className="w-5 h-5 ml-2" />
