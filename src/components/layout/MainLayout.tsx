@@ -9,7 +9,7 @@ export const MainLayout: React.FC = () => {
 
   if (distractionFreeMode) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-8">
+      <div className="min-h-screen bg-cream-50 flex items-center justify-center p-8">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -22,7 +22,7 @@ export const MainLayout: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
+    <div className="min-h-screen bg-cream-100 flex flex-col">
       {/* Top Zone */}
       <WidgetZone
         zone="top"

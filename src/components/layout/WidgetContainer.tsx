@@ -64,14 +64,15 @@ export const WidgetContainer: React.FC<WidgetContainerProps> = ({
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
       className={`bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden ${className}`}
+      className={`bg-white rounded-lg border border-neutral-300 shadow-sm overflow-hidden ${className}`}
       style={{
         minHeight: widget.isCollapsed ? '50px' : '200px',
         height: widget.isCollapsed ? '50px' : 'auto',
       }}
     >
       {/* Widget Header */}
-      <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b border-gray-200">
-        <h3 className="text-sm font-medium text-gray-700 capitalize">
+      <div className="flex items-center justify-between px-3 py-2 bg-cream-100 border-b border-neutral-300">
+        <h3 className="text-sm font-medium text-neutral-900 capitalize">
           {widget.type.replace('-', ' ')}
         </h3>
         
@@ -111,8 +112,8 @@ export const WidgetContainer: React.FC<WidgetContainerProps> = ({
         >
           <Suspense fallback={
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="ml-2 text-sm text-gray-600">Loading widget...</span>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sage-900"></div>
+              <span className="ml-2 text-sm text-neutral-600">Loading widget...</span>
             </div>
           }>
             {renderWidget()}

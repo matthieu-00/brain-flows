@@ -71,7 +71,7 @@ export const WidgetZone: React.FC<WidgetZoneProps> = ({ zone, className }) => {
 
   return (
     <motion.div
-      className={`bg-gray-50 border-gray-200 ${className}`}
+      className={`bg-cream-100 border-neutral-300 ${className}`}
       style={{
         [isVertical ? 'height' : 'width']: isCollapsed ? getCollapsedSize() : getExpandedSize(),
         minHeight: isVertical ? getCollapsedSize() : 'auto',
@@ -83,7 +83,7 @@ export const WidgetZone: React.FC<WidgetZoneProps> = ({ zone, className }) => {
       transition={{ duration: 0.3, ease: 'easeInOut' }}
     >
       {/* Zone Header */}
-      <div className={`flex items-center justify-between p-2 bg-gray-100 border-gray-200 ${
+      <div className={`flex items-center justify-between p-2 bg-neutral-100 border-neutral-300 ${
         isVertical ? 'border-b' : 'border-r h-full'
       } ${isVertical ? 'flex-row' : 'flex-col'}`}>
         <Button
@@ -103,7 +103,7 @@ export const WidgetZone: React.FC<WidgetZoneProps> = ({ zone, className }) => {
               exit={{ opacity: 0, scale: 0.8 }}
               className={isVertical ? '' : 'transform -rotate-90'}
             >
-              <span className="text-xs font-medium text-gray-600 capitalize">
+              <span className="text-xs font-medium text-neutral-600 capitalize">
                 {zone}
               </span>
             </motion.div>
@@ -140,7 +140,7 @@ export const WidgetZone: React.FC<WidgetZoneProps> = ({ zone, className }) => {
             }}
           >
             {widgets.length === 0 ? (
-              <div className="flex items-center justify-center h-full text-gray-500">
+              <div className="flex items-center justify-center h-full text-neutral-600">
                 <div className="text-center">
                   <div className="text-2xl mb-2">📝</div>
                   <p className="text-sm">No widgets yet</p>

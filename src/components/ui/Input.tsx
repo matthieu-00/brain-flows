@@ -30,12 +30,12 @@ export const Input: React.FC<InputProps> = ({
       <input
         id={inputId}
         className={clsx(
-          'w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm',
-          'placeholder-gray-400 text-gray-900',
-          'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+          'w-full px-3 py-2 border border-neutral-300 rounded-lg shadow-sm bg-white',
+          'placeholder-neutral-600 text-neutral-900',
+          'focus:outline-none focus:ring-2 focus:ring-sage-700 focus:border-sage-700 focus:bg-sage-200',
           'transition-colors duration-200',
           error && 'border-red-300 focus:ring-red-500 focus:border-red-500',
-          props.disabled && 'bg-gray-50 cursor-not-allowed',
+          props.disabled && 'bg-neutral-100 cursor-not-allowed',
           className
         )}
         {...props}
@@ -44,7 +44,7 @@ export const Input: React.FC<InputProps> = ({
         <p className="mt-1 text-sm text-red-600">{error}</p>
       )}
       {hint && !error && (
-        <p className="mt-1 text-sm text-gray-500">{hint}</p>
+        <p className="mt-1 text-sm text-neutral-600">{hint}</p>
       )}
     </div>
   );

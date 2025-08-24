@@ -53,7 +53,7 @@ export const Modal: React.FC<ModalProps> = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-gray-500 bg-opacity-50 transition-opacity"
+              className="fixed inset-0 bg-neutral-900 bg-opacity-40 transition-opacity"
               onClick={onClose}
             />
 

@@ -63,16 +63,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       <div className="space-y-6">
         {/* Theme Settings */}
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">Appearance</h3>
+          <h3 className="text-lg font-semibold text-neutral-900 mb-3">Appearance</h3>
           <div className="space-y-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-neutral-900 mb-2">
                 Theme
               </label>
               <select
                 value={settings.theme}
                 onChange={(e) => updateSettings({ theme: e.target.value as any })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sage-700 bg-white"
               >
                 <option value="light">Light</option>
                 <option value="dark">Dark</option>
@@ -84,10 +84,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
         {/* Auto-save Settings */}
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">Auto-save</h3>
+          <h3 className="text-lg font-semibold text-neutral-900 mb-3">Auto-save</h3>
           <div className="space-y-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-neutral-900 mb-2">
                 Auto-save interval (seconds)
               </label>
               <input
@@ -96,7 +96,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 max="300"
                 value={settings.autoSaveInterval}
                 onChange={(e) => updateSettings({ autoSaveInterval: parseInt(e.target.value) || 30 })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sage-700 bg-white"
               />
             </div>
           </div>
@@ -104,7 +104,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
         {/* API Keys */}
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">API Keys</h3>
+          <h3 className="text-lg font-semibold text-neutral-900 mb-3">API Keys</h3>
           <div className="space-y-3">
             <Input
               label="OpenAI API Key"
@@ -128,15 +128,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
         {/* Widget Management */}
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">Widgets</h3>
+          <h3 className="text-lg font-semibold text-neutral-900 mb-3">Widgets</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {widgetTypes.map((widget) => (
               <div
                 key={widget.type}
                 className={`p-3 border rounded-lg cursor-pointer transition-colors ${
                   isWidgetEnabled(widget.type)
-                    ? 'border-blue-300 bg-blue-50'
-                    : 'border-gray-300 bg-white hover:bg-gray-50'
+                    ? 'border-sage-700 bg-sage-100'
+                    : 'border-neutral-300 bg-white hover:bg-sage-100'
                 }`}
                 onClick={() => toggleWidget(widget.type)}
               >
@@ -144,17 +144,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   <div className="text-2xl">{widget.icon}</div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-medium text-gray-900">
+                      <h4 className="text-sm font-medium text-neutral-900">
                         {widget.name}
                       </h4>
                       <input
                         type="checkbox"
                         checked={isWidgetEnabled(widget.type)}
                         readOnly
-                        className="w-4 h-4 text-blue-600 rounded"
+                        className="w-4 h-4 text-sage-900 rounded"
                       />
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-neutral-600 mt-1">
                       {widget.description}
                     </p>
                   </div>
@@ -166,16 +166,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
         {/* Export Settings */}
         <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">Export</h3>
+          <h3 className="text-lg font-semibold text-neutral-900 mb-3">Export</h3>
           <div className="space-y-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-neutral-900 mb-2">
                 Default export format
               </label>
               <select
                 value={settings.exportFormat}
                 onChange={(e) => updateSettings({ exportFormat: e.target.value as any })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sage-700 bg-white"
               >
                 <option value="pdf">PDF</option>
                 <option value="docx">Word Document</option>

@@ -72,9 +72,10 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ className }) => 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className={`bg-white rounded-lg shadow-sm border border-gray-200 ${className}`}
+      className={`bg-white rounded-lg shadow-sm border border-neutral-300 ${className}`}
     >
       {/* Editor Toolbar */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-gray-200">
+      <div className="flex items-center justify-between px-6 py-3 border-b border-neutral-300">
         <div className="flex items-center space-x-2">
           <input
             type="text"
@@ -84,16 +85,16 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ className }) => 
                 updateDocument(currentDocument.id, { title: e.target.value });
               }
             }}
-            className="text-lg font-semibold bg-transparent border-none outline-none focus:ring-0 text-gray-900"
+            className="text-lg font-semibold bg-transparent border-none outline-none focus:ring-0 text-neutral-900"
             placeholder="Document title..."
           />
         </div>
         
-        <div className="flex items-center space-x-4 text-sm text-gray-500">
+        <div className="flex items-center space-x-4 text-sm text-neutral-600">
           <span>{currentDocument?.wordCount || 0} words</span>
           <span>{currentDocument?.characterCount || 0} characters</span>
           <div className="flex items-center space-x-1">
-            <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+            <div className="w-2 h-2 bg-sage-700 rounded-full"></div>
             <span>Auto-saved</span>
           </div>
         </div>
@@ -105,8 +106,8 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ className }) => 
       </div>
 
       {/* Editor Footer */}
-      <div className="px-6 py-3 border-t border-gray-200 bg-gray-50">
-        <div className="flex items-center justify-between text-xs text-gray-500">
+      <div className="px-6 py-3 border-t border-neutral-300 bg-cream-100">
+        <div className="flex items-center justify-between text-xs text-neutral-600">
           <span>
             Last updated: {currentDocument?.updatedAt ? 
               new Date(currentDocument.updatedAt).toLocaleString() : 
