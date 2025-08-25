@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useAuthStore } from './store/authStore';
 import { useDocumentStore } from './store/documentStore';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
-import { LandingPage } from './components/landing/LandingPage';
+import LandingPage from './components/landing/LandingPage';
 import { Header } from './components/layout/Header';
 import { MainLayout } from './components/layout/MainLayout';
 
