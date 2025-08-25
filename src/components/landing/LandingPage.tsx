@@ -1,10 +1,11 @@
 import React from 'react';
+import { useState } from 'react';
 import { Button } from '../ui/Button';
-import { useAuthStore } from '../../store/authStore';
+import { AuthModal } from '../auth/AuthModal';
 import { Pen, FileText, Calculator, Clock, Palette, Brain, ChevronRight, Check } from 'lucide-react';
 
 const LandingPage: React.FC = () => {
-  const { setShowAuthModal } = useAuthStore();
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const features = [
     {
@@ -193,6 +194,12 @@ const LandingPage: React.FC = () => {
           </div>
         </div>
       </footer>
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
     </div>
   );
 };
