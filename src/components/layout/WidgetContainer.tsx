@@ -4,7 +4,6 @@ import { X, Minimize2, Maximize2 } from 'lucide-react';
 import { Widget } from '../../types';
 import { useLayoutStore } from '../../store/layoutStore';
 import { Button } from '../ui/Button';
-import { EmptyWidget } from '../widgets/EmptyWidget';
 
 // Lazy load widgets for better performance
 const StickyNotesWidget = React.lazy(() => import('../widgets/StickyNotesWidget'));
@@ -51,10 +50,30 @@ export const WidgetContainer: React.FC<WidgetContainerProps> = ({
         return <CalculatorWidget widget={widget} />;
       case 'weather':
         return <WeatherWidget widget={widget} />;
-      case 'empty':
       default:
-        return <EmptyWidget widget={widget} />;
+        return (
+          <div className="text-center py-8 text-gray-500">
+            <div className="text-4xl mb-2">❓</div>
+            <p className="text-sm">Unknown widget type</p>
+          </div>
+        );
     }
+  };
+
+  const getWidgetDisplayName = () => {
+    const names = {
+      'sticky-notes': 'Sticky Notes',
+      'flashcards': 'Flashcards',
+      'chess': 'Chess Game',
+      'sudoku': 'Sudoku',
+      'fidget-tools': 'Fidget Tools',
+      'drawing-canvas': 'Drawing Canvas',
+      'ai-chat': 'AI Chat',
+      'timer': 'Timer',
+      'calculator': 'Calculator',
+      'weather': 'Weather',
+    };
+    return names[widget.type] || 'Widget';
   };
 
   return (
@@ -63,17 +82,16 @@ export const WidgetContainer: React.FC<WidgetContainerProps> = ({
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
-      className={`bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden ${className}`}
       className={`bg-white rounded-lg border border-neutral-300 shadow-sm overflow-hidden ${className}`}
       style={{
-        minHeight: widget.isCollapsed ? '50px' : '200px',
-        height: widget.isCollapsed ? '50px' : 'auto',
+        minHeight: widget.isCollapsed ? '60px' : '300px',
+        height: widget.isCollapsed ? '60px' : 'auto',
       }}
     >
       {/* Widget Header */}
-      <div className="flex items-center justify-between px-3 py-2 bg-cream-100 border-b border-neutral-300">
-        <h3 className="text-sm font-medium text-neutral-900 capitalize">
-          {widget.type.replace('-', ' ')}
+      <div className="flex items-center justify-between px-4 py-3 bg-cream-50 border-b border-neutral-300">
+        <h3 className="text-sm font-semibold text-neutral-900">
+          {getWidgetDisplayName()}
         </h3>
         
         <div className="flex items-center space-x-1">
@@ -81,7 +99,8 @@ export const WidgetContainer: React.FC<WidgetContainerProps> = ({
             variant="ghost"
             size="sm"
             onClick={() => toggleWidgetCollapsed(widget.id)}
-            className="p-1 w-6 h-6"
+            className="p-1.5 w-7 h-7 hover:bg-neutral-200"
+            title={widget.isCollapsed ? 'Expand widget' : 'Collapse widget'}
           >
             {widget.isCollapsed ? (
               <Maximize2 className="w-3 h-3" />
@@ -94,7 +113,8 @@ export const WidgetContainer: React.FC<WidgetContainerProps> = ({
             variant="ghost"
             size="sm"
             onClick={() => removeWidget(widget.id)}
-            className="p-1 w-6 h-6 text-red-600 hover:text-red-700"
+            className="p-1.5 w-7 h-7 text-red-600 hover:text-red-700 hover:bg-red-50"
+            title="Remove widget"
           >
             <X className="w-3 h-3" />
           </Button>
@@ -111,9 +131,9 @@ export const WidgetContainer: React.FC<WidgetContainerProps> = ({
           className="p-4"
         >
           <Suspense fallback={
-            <div className="flex items-center justify-center py-8">
+            <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sage-900"></div>
-              <span className="ml-2 text-sm text-neutral-600">Loading widget...</span>
+              <span className="ml-3 text-sm text-neutral-600">Loading widget...</span>
             </div>
           }>
             {renderWidget()}

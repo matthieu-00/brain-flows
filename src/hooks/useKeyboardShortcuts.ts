@@ -1,15 +1,18 @@
 import { useEffect } from 'react';
 import { useLayoutStore } from '../store/layoutStore';
 import { useDocumentStore } from '../store/documentStore';
+import { useUIStore } from '../store/uiStore';
 
 export const useKeyboardShortcuts = () => {
   const { toggleDistractionFreeMode } = useLayoutStore();
   const { saveDocument, exportDocument } = useDocumentStore();
+  const { openWidgetModal } = useUIStore();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Check for Ctrl/Cmd key combinations
       const isCtrlCmd = e.ctrlKey || e.metaKey;
+      const isAlt = e.altKey;
       
       if (isCtrlCmd) {
         switch (e.key) {
@@ -38,6 +41,25 @@ export const useKeyboardShortcuts = () => {
         }
       }
       
+      // Alt key combinations for widget management
+      if (isAlt) {
+        switch (e.key) {
+          case '+':
+          case '=': // Handle both + and = keys (since + requires shift)
+            e.preventDefault();
+            openWidgetModal('add');
+            break;
+            
+          case '-':
+            e.preventDefault();
+            openWidgetModal('remove');
+            break;
+            
+          default:
+            break;
+        }
+      }
+      
       // Escape key: Exit distraction-free mode
       if (e.key === 'Escape') {
         const { distractionFreeMode } = useLayoutStore.getState();
@@ -52,5 +74,5 @@ export const useKeyboardShortcuts = () => {
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [toggleDistractionFreeMode, saveDocument, exportDocument]);
+  }, [toggleDistractionFreeMode, saveDocument, exportDocument, openWidgetModal]);
 };

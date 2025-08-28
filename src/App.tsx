@@ -5,6 +5,7 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import LandingPage from './components/landing/LandingPage';
 import { Header } from './components/layout/Header';
 import { MainLayout } from './components/layout/MainLayout';
+import { WidgetManagementModal } from './components/modals/WidgetManagementModal';
 
 function App() {
   const { isAuthenticated } = useAuthStore();
@@ -36,6 +37,7 @@ function App() {
     <div className="min-h-screen bg-cream-50">
       <Header />
       <MainLayout />
+      <WidgetManagementModal />
     </div>
   );
 }

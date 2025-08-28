@@ -27,8 +27,7 @@ export type WidgetType =
   | 'ai-chat'
   | 'timer'
   | 'calculator'
-  | 'weather'
-  | 'empty';
+  | 'weather';
 
 export type WidgetZone = 'top' | 'bottom' | 'left' | 'right';
 
