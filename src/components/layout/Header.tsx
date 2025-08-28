@@ -43,7 +43,7 @@ export const Header: React.FC = () => {
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <FileText className="w-6 h-6 text-sage-900" />
-              <h1 className="text-xl font-bold text-neutral-900">WriteSpace</h1>
+              <h1 className="text-xl font-bold text-neutral-900">brainsflow.io</h1>
             </div>
 
             <div className="hidden sm:flex items-center space-x-2 text-sm text-neutral-600">
