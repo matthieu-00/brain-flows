@@ -17,7 +17,7 @@ function App() {
   // Create initial document if none exists
   useEffect(() => {
     if (isAuthenticated && !currentDocument) {
-      createDocument('Welcome to WriteSpace');
+      createDocument('Welcome to brainsflow.io');
     }
   }, [isAuthenticated, currentDocument, createDocument]);
 
