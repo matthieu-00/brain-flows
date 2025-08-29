@@ -115,12 +115,9 @@ const AIChatWidget: React.FC<AIChatWidgetProps> = ({ widget }) => {
 
   return (
     <div className="flex flex-col h-80">
-      {/* Header */}
-      <div className="flex items-center justify-between p-3 border-b border-gray-200">
-        <div className="flex items-center space-x-2">
-          <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-          <span className="text-sm font-medium">AI Assistant</span>
-        </div>
+      {/* Controls */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
         <div className="flex space-x-1">
           <Button
             variant="ghost"

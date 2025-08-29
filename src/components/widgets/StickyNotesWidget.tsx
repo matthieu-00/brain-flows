@@ -82,10 +82,9 @@ const StickyNotesWidget: React.FC<StickyNotesWidgetProps> = ({ widget }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg p-4 space-y-4">
-      {/* Header */}
+    <div className="space-y-4">
+      {/* Controls */}
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-800">Sticky Notes</h3>
         <div className="flex items-center space-x-2">
           {/* Color Picker */}
           <div className="relative">
@@ -122,17 +121,17 @@ const StickyNotesWidget: React.FC<StickyNotesWidgetProps> = ({ widget }) => {
               </motion.div>
             )}
           </div>
-
-          {/* Add Note Button */}
-          <Button
-            onClick={addNote}
-            size="sm"
-            className="flex items-center space-x-1"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Note</span>
-          </Button>
         </div>
+
+        {/* Add Note Button */}
+        <Button
+          onClick={addNote}
+          size="sm"
+          className="flex items-center space-x-1"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Add Note</span>
+        </Button>
       </div>
 
       {/* Notes Container */}

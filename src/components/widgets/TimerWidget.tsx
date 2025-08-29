@@ -138,16 +138,9 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ widget }) => {
   };
 
   return (
-    <div className="w-full h-full bg-white rounded-lg border border-neutral-300 overflow-hidden">
-      {/* Header */}
-      <div className="p-4 border-b border-neutral-300 bg-cream-50">
-        <h3 className="font-semibold text-neutral-900">Timer</h3>
-      </div>
-
-      {/* Timer Content */}
-      <div className="p-6 flex flex-col items-center justify-center h-full">
+    <div className="flex flex-col items-center justify-center h-full space-y-6">
         {/* Progress Ring */}
-        <div className="relative w-32 h-32 mb-6">
+        <div className="relative w-32 h-32">
           <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 120 120">
             <circle
               cx="60"
@@ -237,7 +230,6 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ widget }) => {
             </p>
           </div>
         )}
-      </div>
     </div>
   );
 };

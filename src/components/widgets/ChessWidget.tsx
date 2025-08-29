@@ -99,26 +99,22 @@ const ChessWidget: React.FC<ChessWidgetProps> = ({ widget }) => {
   };
 
   return (
-    <div className="w-full h-full bg-white rounded-lg border border-neutral-300 overflow-hidden">
-      {/* Header */}
-      <div className="p-4 border-b border-neutral-300 bg-cream-50">
-        <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-neutral-900">Chess Game</h3>
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={resetGame}
-              variant="secondary"
-              className="p-2"
-              title="New Game"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
+    <div className="w-full h-full overflow-hidden">
+      {/* Controls */}
+      <div className="flex items-center justify-end mb-4">
+        <Button
+          onClick={resetGame}
+          variant="secondary"
+          size="sm"
+          title="New Game"
+        >
+          <RotateCcw className="w-4 h-4 mr-1" />
+          New Game
+        </Button>
       </div>
 
       {/* Game Content */}
-      <div className="p-4 flex flex-col h-full">
+      <div className="flex flex-col h-full">
         {/* Game Status */}
         <div className="mb-4 p-3 bg-sage-100 rounded-lg">
           <p className="text-sm font-medium text-sage-900">
@@ -130,6 +126,7 @@ const ChessWidget: React.FC<ChessWidgetProps> = ({ widget }) => {
             </p>
           )}
         </div>
+
 
         {/* Chess Board */}
         <div className="flex-1 flex items-center justify-center">

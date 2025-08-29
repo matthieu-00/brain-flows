@@ -82,7 +82,7 @@ export const WidgetContainer: React.FC<WidgetContainerProps> = ({
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
-      className={`bg-white rounded-lg border border-neutral-300 shadow-sm overflow-hidden ${className}`}
+      className={`bg-white rounded-lg border border-neutral-300 shadow-sm overflow-hidden mb-4 ${className}`}
       style={{
         minHeight: widget.isCollapsed ? '60px' : '300px',
         height: widget.isCollapsed ? '60px' : 'auto',

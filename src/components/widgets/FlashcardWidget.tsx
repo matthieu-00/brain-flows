@@ -49,10 +49,9 @@ const FlashcardWidget: React.FC<FlashcardWidgetProps> = ({ widget }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg p-4 space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-800">Flashcards</h3>
+    <div className="space-y-4">
+      {/* Controls */}
+      <div className="flex items-center justify-end">
         <Button
           variant="outline"
           size="sm"

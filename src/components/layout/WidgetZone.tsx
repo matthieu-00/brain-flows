@@ -13,42 +13,12 @@ interface WidgetZoneProps {
 }
 
 export const WidgetZone: React.FC<WidgetZoneProps> = ({ zone, className }) => {
-  const { 
-    getWidgetsByZone, 
-    isZoneCollapsed, 
-    toggleZoneCollapsed,
-    layoutConfig 
-  } = useLayoutStore();
-
+  const { getWidgetsByZone, isZoneCollapsed, toggleZoneCollapsed } = useLayoutStore();
   const { openWidgetModal } = useUIStore();
 
   const widgets = getWidgetsByZone(zone);
   const isCollapsed = isZoneCollapsed(zone);
   
-  const getZoneSize = () => {
-    switch (zone) {
-      case 'top':
-        return layoutConfig.topZoneHeight;
-      case 'bottom':
-        return layoutConfig.bottomZoneHeight;
-      case 'left':
-        return layoutConfig.leftZoneWidth;
-      case 'right':
-        return layoutConfig.rightZoneWidth;
-      default:
-        return 25;
-    }
-  };
-
-  const getCollapsedSize = () => {
-    return '48px';
-  };
-
-  const getExpandedSize = () => {
-    const size = getZoneSize();
-    return zone === 'top' || zone === 'bottom' ? `${size}vh` : `${size}vw`;
-  };
-
   const getCollapseIcon = () => {
     if (isCollapsed) {
       switch (zone) {
@@ -72,23 +42,12 @@ export const WidgetZone: React.FC<WidgetZoneProps> = ({ zone, className }) => {
   const isVertical = zone === 'top' || zone === 'bottom';
 
   return (
-    <motion.div
-      className={`bg-cream-100 border-neutral-300 relative ${className}`}
-      style={{
-        [isVertical ? 'height' : 'width']: isCollapsed ? getCollapsedSize() : getExpandedSize(),
-        minHeight: isVertical ? getCollapsedSize() : 'auto',
-        minWidth: !isVertical ? getCollapsedSize() : 'auto',
-      }}
-      animate={{
-        [isVertical ? 'height' : 'width']: isCollapsed ? getCollapsedSize() : getExpandedSize(),
-      }}
-      transition={{ duration: 0.3, ease: 'easeInOut' }}
-    >
+    <div className={`h-full bg-cream-100 border-neutral-300 relative ${className}`}>
       {/* Zone Header */}
-      <div className={`absolute ${
+      <div className={`${
         isVertical 
-          ? 'top-0 left-0 right-0 h-12 flex items-center justify-between px-4 bg-neutral-100 border-b border-neutral-300' 
-          : 'top-0 left-0 bottom-0 w-12 flex flex-col items-center justify-between py-4 bg-neutral-100 border-r border-neutral-300'
+          ? 'h-12 flex items-center justify-between px-4 bg-neutral-100 border-b border-neutral-300' 
+          : 'w-12 flex flex-col items-center justify-between py-4 bg-neutral-100 border-r border-neutral-300'
       } z-10`}>
         
         <Button
@@ -99,21 +58,6 @@ export const WidgetZone: React.FC<WidgetZoneProps> = ({ zone, className }) => {
         >
           {getCollapseIcon()}
         </Button>
-
-        <AnimatePresence>
-          {!isCollapsed && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              className={isVertical ? '' : 'transform -rotate-90'}
-            >
-              <span className="text-xs font-medium text-neutral-600 capitalize whitespace-nowrap">
-                {zone}
-              </span>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {!isCollapsed && (
           <Button
@@ -173,6 +117,6 @@ export const WidgetZone: React.FC<WidgetZoneProps> = ({ zone, className }) => {
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   );
 };
