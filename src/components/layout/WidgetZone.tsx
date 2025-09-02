@@ -18,6 +18,7 @@ export const WidgetZone: React.FC<WidgetZoneProps> = ({ zone, className }) => {
 
   const widgets = getWidgetsByZone(zone);
   const isCollapsed = isZoneCollapsed(zone);
+  const isVertical = zone === 'top' || zone === 'bottom';
   
   const getCollapseIcon = () => {
     if (isCollapsed) {
@@ -38,8 +39,6 @@ export const WidgetZone: React.FC<WidgetZoneProps> = ({ zone, className }) => {
       }
     }
   };
-
-  const isVertical = zone === 'top' || zone === 'bottom';
 
   return (
     <div className={`h-full bg-cream-100 border-neutral-300 relative ${className}`}>
@@ -81,23 +80,17 @@ export const WidgetZone: React.FC<WidgetZoneProps> = ({ zone, className }) => {
             exit={{ opacity: 0 }}
             className={`${
               isVertical 
-                ? 'pt-12 px-4 pb-4 h-full overflow-auto' 
-                : 'pl-12 py-4 pr-4 h-full overflow-auto'
+                ? 'h-full pt-12 px-4 pb-4 overflow-auto' 
+                : 'h-full pl-12 py-4 pr-4 overflow-auto'
             }`}
           >
             {widgets.length === 0 ? (
               <div className="flex items-center justify-center h-full">
-                <motion.button
-                  onClick={() => openWidgetModal('add', zone)}
-                  className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-neutral-300 rounded-lg hover:border-sage-700 hover:bg-sage-50 transition-colors group"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Plus className="w-8 h-8 text-neutral-400 group-hover:text-sage-700 mb-2" />
-                  <span className="text-sm text-neutral-600 group-hover:text-sage-700">
-                    Add Widget
-                  </span>
-                </motion.button>
+                <div className="text-center text-neutral-400">
+                  <div className="text-4xl mb-2">📦</div>
+                  <p className="text-sm">No widgets</p>
+                  <p className="text-xs">Use + button above</p>
+                </div>
               </div>
             ) : (
               <div className={`${
