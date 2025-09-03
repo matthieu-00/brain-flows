@@ -40,30 +40,60 @@ export const WidgetZone: React.FC<WidgetZoneProps> = ({ zone, className }) => {
     }
   };
 
+  const getHeaderPosition = () => {
+    switch (zone) {
+      case 'top': return 'absolute top-0 right-0';
+      case 'bottom': return 'absolute top-0 right-0';
+      case 'left': return 'absolute top-0 left-0';
+      case 'right': return 'absolute top-0 right-0';
+      default: return 'absolute top-0 right-0';
+    }
+  };
+
+  const getHeaderLayout = () => {
+    if (isVertical) {
+      return 'flex-row items-center justify-end';
+    } else {
+      return zone === 'left' ? 'flex-col items-center justify-start' : 'flex-col items-center justify-start';
+    }
+  };
+
+  const getHeaderVisibility = () => {
+    if (isCollapsed) {
+      return 'opacity-100 bg-neutral-100 border border-neutral-300';
+    } else {
+      return 'opacity-0 group-hover:opacity-100 group-hover:bg-neutral-100 group-hover:border group-hover:border-neutral-300';
+    }
+  };
+
   return (
-    <div className={`h-full bg-cream-100 border-neutral-300 relative ${className}`}>
-      {/* Zone Header */}
-      <div className={`${
-        isVertical 
-          ? 'h-12 flex items-center justify-between px-4 bg-neutral-100 border-b border-neutral-300' 
-          : 'w-12 flex flex-col items-center justify-between py-4 bg-neutral-100 border-r border-neutral-300'
-      } z-10`}>
-        
+    <div className={`h-full bg-cream-100 border-neutral-300 relative group ${className}`}>
+      {/* Floating Header with Controls */}
+      <div className={`
+        ${getHeaderPosition()}
+        w-12 h-12 
+        ${getHeaderVisibility()}
+        transition-all duration-200 ease-in-out
+        rounded-lg m-2 z-10
+        flex ${getHeaderLayout()}
+      `}>
+        {/* Collapse/Expand Button */}
         <Button
           variant="ghost"
           size="sm"
           onClick={() => toggleZoneCollapsed(zone)}
-          className="p-2 hover:bg-neutral-200"
+          className="p-2 hover:bg-neutral-200 w-8 h-8"
         >
           {getCollapseIcon()}
         </Button>
 
+        {/* Add Widget Button - Only show when expanded */}
         {!isCollapsed && (
           <Button
             variant="ghost"
             size="sm"
             onClick={() => openWidgetModal('add', zone)}
-            className="p-2 hover:bg-sage-200 text-sage-700"
+            className="p-2 hover:bg-sage-200 text-sage-700 w-8 h-8"
             title={`Add widget to ${zone} zone`}
           >
             <Plus className="w-4 h-4" />
@@ -78,18 +108,14 @@ export const WidgetZone: React.FC<WidgetZoneProps> = ({ zone, className }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className={`${
-              isVertical 
-                ? 'h-full pt-12 px-4 pb-4 overflow-auto' 
-                : 'h-full pl-12 py-4 pr-4 overflow-auto'
-            }`}
+            className="h-full p-4 overflow-auto"
           >
             {widgets.length === 0 ? (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center text-neutral-400">
                   <div className="text-4xl mb-2">📦</div>
                   <p className="text-sm">No widgets</p>
-                  <p className="text-xs">Use + button above</p>
+                  <p className="text-xs">Hover and use + button</p>
                 </div>
               </div>
             ) : (
