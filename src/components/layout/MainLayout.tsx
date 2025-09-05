@@ -6,7 +6,7 @@ import { RichTextEditor } from '../editor/RichTextEditor';
 import { WidgetZone } from './WidgetZone';
 
 export const MainLayout: React.FC = () => {
-  const { distractionFreeMode, layoutConfig, setZoneSize, toggleZoneCollapsed, isZoneCollapsed } = useLayoutStore();
+  const { distractionFreeMode, layoutConfig, setZoneSize, toggleZoneCollapsed, isZoneCollapsed, updateLayoutConfig } = useLayoutStore();
 
   if (distractionFreeMode) {
     return (
@@ -27,12 +27,24 @@ export const MainLayout: React.FC = () => {
       <PanelGroup direction="vertical" className="min-h-screen">
         {/* Top Zone */}
         <Panel
-          defaultSize={isZoneCollapsed('top') ? 5 : layoutConfig.topZoneSize}
+          defaultSize={layoutConfig.topZoneHeight}
           minSize={5}
-          collapsedSize={5}
+          collapsedSize={1}
           collapsible
           collapsed={isZoneCollapsed('top')}
-          onResize={(size) => setZoneSize('top', size)}
+          onResize={(size) => {
+            updateLayoutConfig({ topZoneHeight: size });
+          }}
+          onCollapse={() => {
+            if (!isZoneCollapsed('top')) {
+              toggleZoneCollapsed('top');
+            }
+          }}
+          onExpand={() => {
+            if (isZoneCollapsed('top')) {
+              toggleZoneCollapsed('top');
+            }
+          }}
         >
           <WidgetZone zone="top" />
         </Panel>
@@ -44,12 +56,24 @@ export const MainLayout: React.FC = () => {
           <PanelGroup direction="horizontal" className="h-full">
             {/* Left Zone */}
             <Panel
-              defaultSize={isZoneCollapsed('left') ? 5 : layoutConfig.leftZoneSize}
+              defaultSize={layoutConfig.leftZoneWidth}
               minSize={5}
-              collapsedSize={5}
+              collapsedSize={1}
               collapsible
               collapsed={isZoneCollapsed('left')}
-              onResize={(size) => setZoneSize('left', size)}
+              onResize={(size) => {
+                updateLayoutConfig({ leftZoneWidth: size });
+              }}
+              onCollapse={() => {
+                if (!isZoneCollapsed('left')) {
+                  toggleZoneCollapsed('left');
+                }
+              }}
+              onExpand={() => {
+                if (isZoneCollapsed('left')) {
+                  toggleZoneCollapsed('left');
+                }
+              }}
             >
               <WidgetZone zone="left" />
             </Panel>
@@ -67,12 +91,24 @@ export const MainLayout: React.FC = () => {
 
             {/* Right Zone */}
             <Panel
-              defaultSize={isZoneCollapsed('right') ? 5 : layoutConfig.rightZoneSize}
+              defaultSize={layoutConfig.rightZoneWidth}
               minSize={5}
-              collapsedSize={5}
+              collapsedSize={1}
               collapsible
               collapsed={isZoneCollapsed('right')}
-              onResize={(size) => setZoneSize('right', size)}
+              onResize={(size) => {
+                updateLayoutConfig({ rightZoneWidth: size });
+              }}
+              onCollapse={() => {
+                if (!isZoneCollapsed('right')) {
+                  toggleZoneCollapsed('right');
+                }
+              }}
+              onExpand={() => {
+                if (isZoneCollapsed('right')) {
+                  toggleZoneCollapsed('right');
+                }
+              }}
             >
               <WidgetZone zone="right" />
             </Panel>
@@ -83,12 +119,24 @@ export const MainLayout: React.FC = () => {
 
         {/* Bottom Zone */}
         <Panel
-          defaultSize={isZoneCollapsed('bottom') ? 5 : layoutConfig.bottomZoneSize}
+          defaultSize={layoutConfig.bottomZoneHeight}
           minSize={5}
-          collapsedSize={5}
+          collapsedSize={1}
           collapsible
           collapsed={isZoneCollapsed('bottom')}
-          onResize={(size) => setZoneSize('bottom', size)}
+          onResize={(size) => {
+            updateLayoutConfig({ bottomZoneHeight: size });
+          }}
+          onCollapse={() => {
+            if (!isZoneCollapsed('bottom')) {
+              toggleZoneCollapsed('bottom');
+            }
+          }}
+          onExpand={() => {
+            if (isZoneCollapsed('bottom')) {
+              toggleZoneCollapsed('bottom');
+            }
+          }}
         >
           <WidgetZone zone="bottom" />
         </Panel>

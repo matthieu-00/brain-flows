@@ -19,34 +19,22 @@ interface LayoutState {
   updateLayoutConfig: (updates: Partial<LayoutConfig>) => void;
   toggleZoneCollapsed: (zone: WidgetZone) => void;
   resizeZone: (zone: WidgetZone, size: number) => void;
-  topZoneSize: number;
-  bottomZoneSize: number;
-  leftZoneSize: number;
-  rightZoneSize: number;
   
   // Utility functions
   getWidgetsByZone: (zone: WidgetZone) => Widget[];
   isZoneCollapsed: (zone: WidgetZone) => boolean;
   setZoneSize: (zone: WidgetZone, size: number) => void;
-  topZoneCollapsedSize: number;
-  bottomZoneCollapsedSize: number;
-  leftZoneCollapsedSize: number;
-  rightZoneCollapsedSize: number;
 }
 
 const defaultLayoutConfig: LayoutConfig = {
-  topZoneSize: 25, // percentage
-  bottomZoneSize: 25,
-  leftZoneSize: 25,
-  rightZoneSize: 25,
+  topZoneHeight: 25, // percentage
+  bottomZoneHeight: 25,
+  leftZoneWidth: 25,
+  rightZoneWidth: 25,
   isTopCollapsed: false,
   isBottomCollapsed: false,
   isLeftCollapsed: false,
   isRightCollapsed: false,
-  topZoneCollapsedSize: 5,
-  bottomZoneCollapsedSize: 5,
-  leftZoneCollapsedSize: 5,
-  rightZoneCollapsedSize: 5,
 };
 
 const defaultSettings: AppSettings = {
@@ -133,7 +121,9 @@ export const useLayoutStore = create<LayoutState>()(
       },
 
       resizeZone: (zone: WidgetZone, size: number) => {
-        const sizeKey = `${zone}ZoneSize`;
+        const sizeKey = zone === 'top' || zone === 'bottom' 
+          ? `${zone}ZoneHeight` 
+          : `${zone}ZoneWidth`;
         
         set(state => ({
           layoutConfig: {
@@ -144,7 +134,9 @@ export const useLayoutStore = create<LayoutState>()(
       },
 
       setZoneSize: (zone: WidgetZone, size: number) => {
-        const sizeKey = `${zone}ZoneSize`;
+        const sizeKey = zone === 'top' || zone === 'bottom' 
+          ? `${zone}ZoneHeight` 
+          : `${zone}ZoneWidth`;
         set(state => ({
           layoutConfig: {
             ...state.layoutConfig,
