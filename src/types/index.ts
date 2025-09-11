@@ -51,6 +51,10 @@ export interface LayoutConfig {
   isBottomCollapsed: boolean;
   isLeftCollapsed: boolean;
   isRightCollapsed: boolean;
+  topZonePreviousHeight?: number;
+  bottomZonePreviousHeight?: number;
+  leftZonePreviousWidth?: number;
+  rightZonePreviousWidth?: number;
 }
 
 export interface AppSettings {

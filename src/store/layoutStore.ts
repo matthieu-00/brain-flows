@@ -35,6 +35,10 @@ const defaultLayoutConfig: LayoutConfig = {
   isBottomCollapsed: false,
   isLeftCollapsed: false,
   isRightCollapsed: false,
+  topZonePreviousHeight: 25,
+  bottomZonePreviousHeight: 25,
+  leftZonePreviousWidth: 25,
+  rightZonePreviousWidth: 25,
 };
 
 const defaultSettings: AppSettings = {
@@ -111,13 +115,39 @@ export const useLayoutStore = create<LayoutState>()(
       },
 
       toggleZoneCollapsed: (zone: WidgetZone) => {
-        const collapseKey = `is${zone.charAt(0).toUpperCase() + zone.slice(1)}Collapsed` as keyof LayoutConfig;
-        set(state => ({
-          layoutConfig: {
-            ...state.layoutConfig,
-            [collapseKey]: !state.layoutConfig[collapseKey],
-          },
-        }));
+        set(state => {
+          const collapseKey = `is${zone.charAt(0).toUpperCase() + zone.slice(1)}Collapsed` as keyof LayoutConfig;
+          const isVertical = zone === 'top' || zone === 'bottom';
+          const sizeKey = isVertical 
+            ? `${zone}ZoneHeight` as keyof LayoutConfig
+            : `${zone}ZoneWidth` as keyof LayoutConfig;
+          const previousSizeKey = isVertical
+            ? `${zone}ZonePreviousHeight` as keyof LayoutConfig
+            : `${zone}ZonePreviousWidth` as keyof LayoutConfig;
+
+          const isCurrentlyCollapsed = state.layoutConfig[collapseKey] as boolean;
+          const currentSize = state.layoutConfig[sizeKey] as number;
+          const previousSize = state.layoutConfig[previousSizeKey] as number | undefined;
+
+          const newLayoutConfig = { ...state.layoutConfig };
+
+          if (!isCurrentlyCollapsed) {
+            // Collapsing: save current size and set to 1
+            newLayoutConfig[previousSizeKey] = currentSize;
+            newLayoutConfig[sizeKey] = 1;
+          } else {
+            // Expanding: restore from previous size
+            const restoreSize = (previousSize && previousSize > 1) ? previousSize : 25;
+            newLayoutConfig[sizeKey] = restoreSize;
+          }
+
+          // Toggle the collapsed state
+          newLayoutConfig[collapseKey] = !isCurrentlyCollapsed;
+
+          return {
+            layoutConfig: newLayoutConfig,
+          };
+        });
       },
 
       resizeZone: (zone: WidgetZone, size: number) => {

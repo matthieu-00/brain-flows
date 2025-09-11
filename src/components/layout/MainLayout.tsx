@@ -35,16 +35,6 @@ export const MainLayout: React.FC = () => {
           onResize={(size) => {
             updateLayoutConfig({ topZoneHeight: size });
           }}
-          onCollapse={() => {
-            if (!isZoneCollapsed('top')) {
-              toggleZoneCollapsed('top');
-            }
-          }}
-          onExpand={() => {
-            if (isZoneCollapsed('top')) {
-              toggleZoneCollapsed('top');
-            }
-          }}
         >
           <WidgetZone zone="top" />
         </Panel>
@@ -63,16 +53,6 @@ export const MainLayout: React.FC = () => {
               collapsed={isZoneCollapsed('left')}
               onResize={(size) => {
                 updateLayoutConfig({ leftZoneWidth: size });
-              }}
-              onCollapse={() => {
-                if (!isZoneCollapsed('left')) {
-                  toggleZoneCollapsed('left');
-                }
-              }}
-              onExpand={() => {
-                if (isZoneCollapsed('left')) {
-                  toggleZoneCollapsed('left');
-                }
               }}
             >
               <WidgetZone zone="left" />
@@ -99,16 +79,6 @@ export const MainLayout: React.FC = () => {
               onResize={(size) => {
                 updateLayoutConfig({ rightZoneWidth: size });
               }}
-              onCollapse={() => {
-                if (!isZoneCollapsed('right')) {
-                  toggleZoneCollapsed('right');
-                }
-              }}
-              onExpand={() => {
-                if (isZoneCollapsed('right')) {
-                  toggleZoneCollapsed('right');
-                }
-              }}
             >
               <WidgetZone zone="right" />
             </Panel>
@@ -126,16 +96,6 @@ export const MainLayout: React.FC = () => {
           collapsed={isZoneCollapsed('bottom')}
           onResize={(size) => {
             updateLayoutConfig({ bottomZoneHeight: size });
-          }}
-          onCollapse={() => {
-            if (!isZoneCollapsed('bottom')) {
-              toggleZoneCollapsed('bottom');
-            }
-          }}
-          onExpand={() => {
-            if (isZoneCollapsed('bottom')) {
-              toggleZoneCollapsed('bottom');
-            }
           }}
         >
           <WidgetZone zone="bottom" />
