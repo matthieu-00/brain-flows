@@ -27,7 +27,7 @@ export const MainLayout: React.FC = () => {
       <PanelGroup direction="vertical" className="min-h-screen">
         {/* Top Zone */}
         <Panel
-          defaultSize={layoutConfig.topZoneHeight}
+          size={layoutConfig.topZoneHeight}
           minSize={5}
           collapsedSize={1}
           collapsible
@@ -46,7 +46,7 @@ export const MainLayout: React.FC = () => {
           <PanelGroup direction="horizontal" className="h-full">
             {/* Left Zone */}
             <Panel
-              defaultSize={layoutConfig.leftZoneWidth}
+              size={layoutConfig.leftZoneWidth}
               minSize={5}
               collapsedSize={1}
               collapsible
@@ -71,7 +71,7 @@ export const MainLayout: React.FC = () => {
 
             {/* Right Zone */}
             <Panel
-              defaultSize={layoutConfig.rightZoneWidth}
+              size={layoutConfig.rightZoneWidth}
               minSize={5}
               collapsedSize={1}
               collapsible
@@ -89,7 +89,7 @@ export const MainLayout: React.FC = () => {
 
         {/* Bottom Zone */}
         <Panel
-          defaultSize={layoutConfig.bottomZoneHeight}
+          size={layoutConfig.bottomZoneHeight}
           minSize={5}
           collapsedSize={1}
           collapsible
