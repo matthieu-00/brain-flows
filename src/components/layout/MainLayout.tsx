@@ -1,12 +1,16 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { PanelGroup, Panel, PanelResizeHandle } from 'react-resizable-panels';
+import { PanelGroup, Panel, PanelResizeHandle, ImperativePanelGroupHandle } from 'react-resizable-panels';
 import { useLayoutStore } from '../../store/layoutStore';
 import { RichTextEditor } from '../editor/RichTextEditor';
 import { WidgetZone } from './WidgetZone';
 
 export const MainLayout: React.FC = () => {
-  const { distractionFreeMode, layoutConfig, setZoneSize, toggleZoneCollapsed, isZoneCollapsed, updateLayoutConfig } = useLayoutStore();
+  const { distractionFreeMode, layoutConfig, updateLayoutConfig } = useLayoutStore();
+  
+  // Refs for PanelGroups to control collapsing
+  const verticalGroupRef = React.useRef<ImperativePanelGroupHandle>(null);
+  const horizontalGroupRef = React.useRef<ImperativePanelGroupHandle>(null);
 
   if (distractionFreeMode) {
     return (
@@ -24,38 +28,38 @@ export const MainLayout: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-cream-100">
-      <PanelGroup direction="vertical" className="min-h-screen">
+      <PanelGroup direction="vertical" className="min-h-screen" ref={verticalGroupRef}>
         {/* Top Zone */}
         <Panel
+          id="top-panel"
           size={layoutConfig.topZoneHeight}
-          minSize={5}
+          minSize={1}
           collapsedSize={1}
           collapsible
-          collapsed={isZoneCollapsed('top')}
           onResize={(size) => {
             updateLayoutConfig({ topZoneHeight: size });
           }}
         >
-          <WidgetZone zone="top" />
+          <WidgetZone zone="top" panelGroupRef={verticalGroupRef} panelId="top-panel" />
         </Panel>
 
         <PanelResizeHandle className="h-1 bg-neutral-300 hover:bg-sage-700 transition-colors" />
 
         {/* Main Content Area */}
         <Panel defaultSize={50} minSize={20}>
-          <PanelGroup direction="horizontal" className="h-full">
+          <PanelGroup direction="horizontal" className="h-full" ref={horizontalGroupRef}>
             {/* Left Zone */}
             <Panel
+              id="left-panel"
               size={layoutConfig.leftZoneWidth}
-              minSize={5}
+              minSize={1}
               collapsedSize={1}
               collapsible
-              collapsed={isZoneCollapsed('left')}
               onResize={(size) => {
                 updateLayoutConfig({ leftZoneWidth: size });
               }}
             >
-              <WidgetZone zone="left" />
+              <WidgetZone zone="left" panelGroupRef={horizontalGroupRef} panelId="left-panel" />
             </Panel>
 
             <PanelResizeHandle className="w-1 bg-neutral-300 hover:bg-sage-700 transition-colors" />
@@ -71,16 +75,16 @@ export const MainLayout: React.FC = () => {
 
             {/* Right Zone */}
             <Panel
+              id="right-panel"
               size={layoutConfig.rightZoneWidth}
-              minSize={5}
+              minSize={1}
               collapsedSize={1}
               collapsible
-              collapsed={isZoneCollapsed('right')}
               onResize={(size) => {
                 updateLayoutConfig({ rightZoneWidth: size });
               }}
             >
-              <WidgetZone zone="right" />
+              <WidgetZone zone="right" panelGroupRef={horizontalGroupRef} panelId="right-panel" />
             </Panel>
           </PanelGroup>
         </Panel>
@@ -89,16 +93,16 @@ export const MainLayout: React.FC = () => {
 
         {/* Bottom Zone */}
         <Panel
+          id="bottom-panel"
           size={layoutConfig.bottomZoneHeight}
-          minSize={5}
+          minSize={1}
           collapsedSize={1}
           collapsible
-          collapsed={isZoneCollapsed('bottom')}
           onResize={(size) => {
             updateLayoutConfig({ bottomZoneHeight: size });
           }}
         >
-          <WidgetZone zone="bottom" />
+          <WidgetZone zone="bottom" panelGroupRef={verticalGroupRef} panelId="bottom-panel" />
         </Panel>
       </PanelGroup>
     </div>

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { ImperativePanelGroupHandle } from 'react-resizable-panels';
 import { Widget, WidgetType, WidgetZone, LayoutConfig, AppSettings } from '../types';
 
 interface LayoutState {
@@ -24,6 +25,9 @@ interface LayoutState {
   getWidgetsByZone: (zone: WidgetZone) => Widget[];
   isZoneCollapsed: (zone: WidgetZone) => boolean;
   setZoneSize: (zone: WidgetZone, size: number) => void;
+  
+  // New method for PanelGroup-based collapsing
+  toggleZoneCollapsedWithPanelGroup: (zone: WidgetZone, panelGroupRef: React.RefObject<ImperativePanelGroupHandle>, panelId: string) => void;
 }
 
 const defaultLayoutConfig: LayoutConfig = {
@@ -144,6 +148,66 @@ export const useLayoutStore = create<LayoutState>()(
           // Toggle the collapsed state
           newLayoutConfig[collapseKey] = !isCurrentlyCollapsed;
 
+          return {
+            layoutConfig: newLayoutConfig,
+          };
+        });
+      },
+
+      toggleZoneCollapsedWithPanelGroup: (zone: WidgetZone, panelGroupRef: React.RefObject<ImperativePanelGroupHandle>, panelId: string) => {
+        const panelGroup = panelGroupRef.current;
+        if (!panelGroup) return;
+
+        // Get current collapsed state
+        const { isZoneCollapsed } = get();
+        const isCurrentlyCollapsed = isZoneCollapsed(zone);
+
+        if (!isCurrentlyCollapsed) {
+          // Collapsing: save current size before collapsing
+          const { layoutConfig } = get();
+          const isVertical = zone === 'top' || zone === 'bottom';
+          const sizeKey = isVertical 
+            ? `${zone}ZoneHeight` as keyof LayoutConfig
+            : `${zone}ZoneWidth` as keyof LayoutConfig;
+          const previousSizeKey = isVertical
+            ? `${zone}ZonePreviousHeight` as keyof LayoutConfig
+            : `${zone}ZonePreviousWidth` as keyof LayoutConfig;
+          
+          const currentSize = layoutConfig[sizeKey] as number;
+          
+          // Save current size
+          set(state => ({
+            layoutConfig: {
+              ...state.layoutConfig,
+              [previousSizeKey]: currentSize,
+            }
+          }));
+        }
+
+        // Use PanelGroup's built-in collapse functionality
+        panelGroup.setLayout([]);
+        
+        // Toggle the collapsed state in our store
+        set(state => {
+          const collapseKey = `is${zone.charAt(0).toUpperCase() + zone.slice(1)}Collapsed` as keyof LayoutConfig;
+          const newLayoutConfig = { ...state.layoutConfig };
+          newLayoutConfig[collapseKey] = !isCurrentlyCollapsed;
+          
+          if (isCurrentlyCollapsed) {
+            // Expanding: restore previous size
+            const isVertical = zone === 'top' || zone === 'bottom';
+            const sizeKey = isVertical 
+              ? `${zone}ZoneHeight` as keyof LayoutConfig
+              : `${zone}ZoneWidth` as keyof LayoutConfig;
+            const previousSizeKey = isVertical
+              ? `${zone}ZonePreviousHeight` as keyof LayoutConfig
+              : `${zone}ZonePreviousWidth` as keyof LayoutConfig;
+            
+            const previousSize = state.layoutConfig[previousSizeKey] as number | undefined;
+            const restoreSize = (previousSize && previousSize > 1) ? previousSize : 25;
+            newLayoutConfig[sizeKey] = restoreSize;
+          }
+          
           return {
             layoutConfig: newLayoutConfig,
           };

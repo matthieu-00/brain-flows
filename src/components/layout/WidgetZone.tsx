@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { ImperativePanelGroupHandle } from 'react-resizable-panels';
 import { useLayoutStore } from '../../store/layoutStore';
 import { useUIStore } from '../../store/uiStore';
 import { WidgetZone as WidgetZoneType } from '../../types';
@@ -10,6 +11,8 @@ import { WidgetContainer } from './WidgetContainer';
 interface WidgetZoneProps {
   zone: WidgetZoneType;
   className?: string;
+  panelGroupRef: React.RefObject<ImperativePanelGroupHandle>;
+  panelId: string;
 }
 
 const EmptyStateIcon: React.FC = () => (
@@ -28,8 +31,8 @@ const EmptyStateIcon: React.FC = () => (
   </svg>
 );
 
-export const WidgetZone: React.FC<WidgetZoneProps> = ({ zone, className }) => {
-  const { getWidgetsByZone, isZoneCollapsed, toggleZoneCollapsed } = useLayoutStore();
+export const WidgetZone: React.FC<WidgetZoneProps> = ({ zone, className, panelGroupRef, panelId }) => {
+  const { getWidgetsByZone, isZoneCollapsed, toggleZoneCollapsedWithPanelGroup } = useLayoutStore();
   const { openWidgetModal } = useUIStore();
 
   const widgets = getWidgetsByZone(zone);
@@ -88,7 +91,7 @@ export const WidgetZone: React.FC<WidgetZoneProps> = ({ zone, className }) => {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => toggleZoneCollapsed(zone)}
+          onClick={() => toggleZoneCollapsedWithPanelGroup(zone, panelGroupRef, panelId)}
           className="w-8 h-8 p-1 flex items-center justify-center hover:bg-neutral-200"
           title={isCollapsed ? `Expand ${zone} zone` : `Collapse ${zone} zone`}
         >
