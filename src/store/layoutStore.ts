@@ -158,59 +158,99 @@ export const useLayoutStore = create<LayoutState>()(
         const panelGroup = panelGroupRef.current;
         if (!panelGroup) return;
 
-        // Get current collapsed state
-        const { isZoneCollapsed } = get();
+        // Get current layout and collapsed state
+        const currentLayout = panelGroup.getLayout();
+        const { isZoneCollapsed, layoutConfig } = get();
         const isCurrentlyCollapsed = isZoneCollapsed(zone);
 
+        const isVertical = zone === 'top' || zone === 'bottom';
+        const sizeKey = isVertical
+          ? `${zone}ZoneHeight` as keyof LayoutConfig
+          : `${zone}ZoneWidth` as keyof LayoutConfig;
+        const previousSizeKey = isVertical
+          ? `${zone}ZonePreviousHeight` as keyof LayoutConfig
+          : `${zone}ZonePreviousWidth` as keyof LayoutConfig;
+
+        let newLayout: number[];
+        let newLayoutConfig = { ...layoutConfig };
+
         if (!isCurrentlyCollapsed) {
-          // Collapsing: save current size before collapsing
-          const { layoutConfig } = get();
-          const isVertical = zone === 'top' || zone === 'bottom';
-          const sizeKey = isVertical 
-            ? `${zone}ZoneHeight` as keyof LayoutConfig
-            : `${zone}ZoneWidth` as keyof LayoutConfig;
-          const previousSizeKey = isVertical
-            ? `${zone}ZonePreviousHeight` as keyof LayoutConfig
-            : `${zone}ZonePreviousWidth` as keyof LayoutConfig;
-          
+          // Collapsing: save current size and collapse to 1%
           const currentSize = layoutConfig[sizeKey] as number;
-          
-          // Save current size
-          set(state => ({
-            layoutConfig: {
-              ...state.layoutConfig,
-              [previousSizeKey]: currentSize,
-            }
-          }));
+          newLayoutConfig[previousSizeKey] = currentSize;
+          newLayoutConfig[sizeKey] = 1;
+
+          // Calculate new layout based on zone
+          if (zone === 'top') {
+            // Vertical group: [top, main, bottom]
+            const mainSize = currentLayout[1] || 50;
+            const bottomSize = currentLayout[2] || layoutConfig.bottomZoneHeight;
+            const spaceToRedistribute = currentSize - 1;
+            newLayout = [1, mainSize + spaceToRedistribute, bottomSize];
+          } else if (zone === 'bottom') {
+            // Vertical group: [top, main, bottom]
+            const topSize = currentLayout[0] || layoutConfig.topZoneHeight;
+            const mainSize = currentLayout[1] || 50;
+            const spaceToRedistribute = currentSize - 1;
+            newLayout = [topSize, mainSize + spaceToRedistribute, 1];
+          } else if (zone === 'left') {
+            // Horizontal group: [left, center, right]
+            const centerSize = currentLayout[1] || 50;
+            const rightSize = currentLayout[2] || layoutConfig.rightZoneWidth;
+            const spaceToRedistribute = currentSize - 1;
+            newLayout = [1, centerSize + spaceToRedistribute, rightSize];
+          } else {
+            // right
+            // Horizontal group: [left, center, right]
+            const leftSize = currentLayout[0] || layoutConfig.leftZoneWidth;
+            const centerSize = currentLayout[1] || 50;
+            const spaceToRedistribute = currentSize - 1;
+            newLayout = [leftSize, centerSize + spaceToRedistribute, 1];
+          }
+        } else {
+          // Expanding: restore previous size
+          const previousSize = layoutConfig[previousSizeKey] as number | undefined;
+          const restoreSize = (previousSize && previousSize > 1) ? previousSize : 25;
+          newLayoutConfig[sizeKey] = restoreSize;
+
+          // Calculate new layout based on zone
+          if (zone === 'top') {
+            // Vertical group: [top, main, bottom]
+            const mainSize = currentLayout[1] || 50;
+            const bottomSize = currentLayout[2] || layoutConfig.bottomZoneHeight;
+            const spaceToTake = restoreSize - 1;
+            newLayout = [restoreSize, Math.max(20, mainSize - spaceToTake), bottomSize];
+          } else if (zone === 'bottom') {
+            // Vertical group: [top, main, bottom]
+            const topSize = currentLayout[0] || layoutConfig.topZoneHeight;
+            const mainSize = currentLayout[1] || 50;
+            const spaceToTake = restoreSize - 1;
+            newLayout = [topSize, Math.max(20, mainSize - spaceToTake), restoreSize];
+          } else if (zone === 'left') {
+            // Horizontal group: [left, center, right]
+            const centerSize = currentLayout[1] || 50;
+            const rightSize = currentLayout[2] || layoutConfig.rightZoneWidth;
+            const spaceToTake = restoreSize - 1;
+            newLayout = [restoreSize, Math.max(30, centerSize - spaceToTake), rightSize];
+          } else {
+            // right
+            // Horizontal group: [left, center, right]
+            const leftSize = currentLayout[0] || layoutConfig.leftZoneWidth;
+            const centerSize = currentLayout[1] || 50;
+            const spaceToTake = restoreSize - 1;
+            newLayout = [leftSize, Math.max(30, centerSize - spaceToTake), restoreSize];
+          }
         }
 
-        // Use PanelGroup's built-in collapse functionality
-        panelGroup.setLayout([]);
-        
+        // Apply the new layout
+        panelGroup.setLayout(newLayout);
+
         // Toggle the collapsed state in our store
-        set(state => {
-          const collapseKey = `is${zone.charAt(0).toUpperCase() + zone.slice(1)}Collapsed` as keyof LayoutConfig;
-          const newLayoutConfig = { ...state.layoutConfig };
-          newLayoutConfig[collapseKey] = !isCurrentlyCollapsed;
-          
-          if (isCurrentlyCollapsed) {
-            // Expanding: restore previous size
-            const isVertical = zone === 'top' || zone === 'bottom';
-            const sizeKey = isVertical 
-              ? `${zone}ZoneHeight` as keyof LayoutConfig
-              : `${zone}ZoneWidth` as keyof LayoutConfig;
-            const previousSizeKey = isVertical
-              ? `${zone}ZonePreviousHeight` as keyof LayoutConfig
-              : `${zone}ZonePreviousWidth` as keyof LayoutConfig;
-            
-            const previousSize = state.layoutConfig[previousSizeKey] as number | undefined;
-            const restoreSize = (previousSize && previousSize > 1) ? previousSize : 25;
-            newLayoutConfig[sizeKey] = restoreSize;
-          }
-          
-          return {
-            layoutConfig: newLayoutConfig,
-          };
+        const collapseKey = `is${zone.charAt(0).toUpperCase() + zone.slice(1)}Collapsed` as keyof LayoutConfig;
+        newLayoutConfig[collapseKey] = !isCurrentlyCollapsed;
+
+        set({
+          layoutConfig: newLayoutConfig,
         });
       },
 

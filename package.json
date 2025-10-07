@@ -24,7 +24,6 @@
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "^18.3.1",
-    "react-quizlet-flashcard": "^4.0.22",
     "react-resizable-panels": "^2.0.19",
     "zustand": "^5.0.8"
   },

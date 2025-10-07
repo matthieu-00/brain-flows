@@ -4,8 +4,6 @@
 import React, { useState } from 'react';
 import { Plus, X, Edit3 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FlashcardArray } from 'react-quizlet-flashcard';
-import 'react-quizlet-flashcard/dist/index.css';
 import { Widget, Flashcard } from '../../types';
 import { useLayoutStore } from '../../store/layoutStore';
 import { Button } from '../ui/Button';
@@ -123,23 +121,11 @@ const FlashcardWidget: React.FC<FlashcardWidgetProps> = ({ widget }) => {
             </div>
           )}
 
-          {/* Flashcard Array Component */}
-          <div className="flashcard-container">
-            <FlashcardArray 
-              deck={flashcards}
-              frontCardStyle={{
-                backgroundColor: '#f8fafc',
-                border: '2px solid #e2e8f0',
-                borderRadius: '12px',
-                minHeight: '200px',
-              }}
-              backCardStyle={{
-                backgroundColor: '#f1f5f9',
-                border: '2px solid #cbd5e1',
-                borderRadius: '12px',
-                minHeight: '200px',
-              }}
-            />
+          {/* Simple Flashcard Display */}
+          <div className="text-center py-8 text-gray-500">
+            <div className="text-2xl mb-2">🃏</div>
+            <p className="text-sm">{flashcards.length} flashcard{flashcards.length !== 1 ? 's' : ''} created</p>
+            <p className="text-xs mt-1">Interactive flashcard viewer coming soon</p>
           </div>
         </div>
       ) : (

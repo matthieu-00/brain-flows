@@ -71,7 +71,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ className }) => 
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`bg-white rounded-lg shadow-sm border border-gray-200 ${className}`}
       className={`bg-white rounded-lg shadow-sm border border-neutral-300 ${className}`}
     >
       {/* Editor Toolbar */}
