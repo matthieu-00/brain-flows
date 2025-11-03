@@ -32,11 +32,24 @@ const EmptyStateIcon: React.FC = () => (
 );
 
 export const WidgetZone: React.FC<WidgetZoneProps> = ({ zone, className, panelGroupRef, panelId }) => {
-  const { getWidgetsByZone, isZoneCollapsed, toggleZoneCollapsedWithPanelGroup } = useLayoutStore();
-  const { openWidgetModal } = useUIStore();
-
-  const widgets = getWidgetsByZone(zone);
-  const isCollapsed = isZoneCollapsed(zone);
+  // Use Zustand selectors to prevent unnecessary re-renders
+  const widgets = useLayoutStore((state) => 
+    state.widgets
+      .filter(w => w.zone === zone && w.isEnabled)
+      .sort((a, b) => a.position - b.position)
+  );
+  const isCollapsed = useLayoutStore((state) => {
+    const { layoutConfig } = state;
+    switch (zone) {
+      case 'top': return layoutConfig.isTopCollapsed;
+      case 'bottom': return layoutConfig.isBottomCollapsed;
+      case 'left': return layoutConfig.isLeftCollapsed;
+      case 'right': return layoutConfig.isRightCollapsed;
+      default: return false;
+    }
+  });
+  const toggleZoneCollapsedWithPanelGroup = useLayoutStore((state) => state.toggleZoneCollapsedWithPanelGroup);
+  const openWidgetModal = useUIStore((state) => state.openWidgetModal);
   
   const getCollapseIcon = () => {
     if (isCollapsed) {

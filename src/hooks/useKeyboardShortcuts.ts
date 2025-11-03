@@ -4,10 +4,6 @@ import { useDocumentStore } from '../store/documentStore';
 import { useUIStore } from '../store/uiStore';
 
 export const useKeyboardShortcuts = () => {
-  const { toggleDistractionFreeMode } = useLayoutStore();
-  const { saveDocument, exportDocument } = useDocumentStore();
-  const { openWidgetModal } = useUIStore();
-
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Check for Ctrl/Cmd key combinations
@@ -19,20 +15,20 @@ export const useKeyboardShortcuts = () => {
           case 's':
             // Ctrl/Cmd + S: Save document
             e.preventDefault();
-            saveDocument();
+            useDocumentStore.getState().saveDocument();
             break;
             
           case 'e':
             // Ctrl/Cmd + E: Export document
             e.preventDefault();
-            exportDocument('pdf');
+            useDocumentStore.getState().exportDocument('pdf');
             break;
             
           case 'Enter':
             // Ctrl/Cmd + Enter: Toggle distraction-free mode
             if (e.shiftKey) {
               e.preventDefault();
-              toggleDistractionFreeMode();
+              useLayoutStore.getState().toggleDistractionFreeMode();
             }
             break;
             
@@ -47,12 +43,12 @@ export const useKeyboardShortcuts = () => {
           case '+':
           case '=': // Handle both + and = keys (since + requires shift)
             e.preventDefault();
-            openWidgetModal('add');
+            useUIStore.getState().openWidgetModal('add');
             break;
             
           case '-':
             e.preventDefault();
-            openWidgetModal('remove');
+            useUIStore.getState().openWidgetModal('remove');
             break;
             
           default:
@@ -62,7 +58,7 @@ export const useKeyboardShortcuts = () => {
       
       // Escape key: Exit distraction-free mode
       if (e.key === 'Escape') {
-        const { distractionFreeMode } = useLayoutStore.getState();
+        const { distractionFreeMode, toggleDistractionFreeMode } = useLayoutStore.getState();
         if (distractionFreeMode) {
           toggleDistractionFreeMode();
         }
@@ -74,5 +70,5 @@ export const useKeyboardShortcuts = () => {
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [toggleDistractionFreeMode, saveDocument, exportDocument, openWidgetModal]);
+  }, []); // Empty dependency array - we use getState() to avoid re-subscriptions
 };

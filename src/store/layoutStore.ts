@@ -26,6 +26,10 @@ interface LayoutState {
   isZoneCollapsed: (zone: WidgetZone) => boolean;
   setZoneSize: (zone: WidgetZone, size: number) => void;
   
+  // Settings management
+  updateSettings: (updates: Partial<AppSettings>) => void;
+  toggleDistractionFreeMode: () => void;
+  
   // New method for PanelGroup-based collapsing
   toggleZoneCollapsedWithPanelGroup: (zone: WidgetZone, panelGroupRef: React.RefObject<ImperativePanelGroupHandle>, panelId: string) => void;
 }

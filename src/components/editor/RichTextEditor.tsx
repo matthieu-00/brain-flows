@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -12,6 +12,7 @@ interface RichTextEditorProps {
 
 export const RichTextEditor: React.FC<RichTextEditorProps> = ({ className }) => {
   const { currentDocument, updateDocument, autoSave } = useDocumentStore();
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const editor = useEditor({
     extensions: [
@@ -42,15 +43,28 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ className }) => 
           characterCount,
         });
 
-        // Auto-save after 2 seconds of inactivity
-        const timeoutId = setTimeout(() => {
-          autoSave();
-        }, 2000);
+        // Clear existing timeout
+        if (autoSaveTimeoutRef.current) {
+          clearTimeout(autoSaveTimeoutRef.current);
+        }
 
-        return () => clearTimeout(timeoutId);
+        // Auto-save after 2 seconds of inactivity
+        autoSaveTimeoutRef.current = setTimeout(() => {
+          autoSave();
+          autoSaveTimeoutRef.current = null;
+        }, 2000);
       }
     },
   });
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Update editor content when document changes
   useEffect(() => {

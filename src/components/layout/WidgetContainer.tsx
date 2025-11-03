@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { X, Minimize2, Maximize2 } from 'lucide-react';
 import { Widget } from '../../types';
@@ -22,13 +22,27 @@ interface WidgetContainerProps {
   className?: string;
 }
 
-export const WidgetContainer: React.FC<WidgetContainerProps> = ({
+const WIDGET_NAMES: Record<Widget['type'], string> = {
+  'sticky-notes': 'Sticky Notes',
+  'flashcards': 'Flashcards',
+  'chess': 'Chess Game',
+  'sudoku': 'Sudoku',
+  'fidget-tools': 'Fidget Tools',
+  'drawing-canvas': 'Drawing Canvas',
+  'ai-chat': 'AI Chat',
+  'timer': 'Timer',
+  'calculator': 'Calculator',
+  'weather': 'Weather',
+};
+
+const WidgetContainer: React.FC<WidgetContainerProps> = ({
   widget,
   className = '',
 }) => {
-  const { removeWidget, toggleWidgetCollapsed } = useLayoutStore();
+  const removeWidget = useLayoutStore((state) => state.removeWidget);
+  const toggleWidgetCollapsed = useLayoutStore((state) => state.toggleWidgetCollapsed);
 
-  const renderWidget = () => {
+  const renderWidget = useMemo(() => {
     switch (widget.type) {
       case 'sticky-notes':
         return <StickyNotesWidget widget={widget} />;
@@ -58,23 +72,11 @@ export const WidgetContainer: React.FC<WidgetContainerProps> = ({
           </div>
         );
     }
-  };
+  }, [widget.type, widget.id]);
 
-  const getWidgetDisplayName = () => {
-    const names = {
-      'sticky-notes': 'Sticky Notes',
-      'flashcards': 'Flashcards',
-      'chess': 'Chess Game',
-      'sudoku': 'Sudoku',
-      'fidget-tools': 'Fidget Tools',
-      'drawing-canvas': 'Drawing Canvas',
-      'ai-chat': 'AI Chat',
-      'timer': 'Timer',
-      'calculator': 'Calculator',
-      'weather': 'Weather',
-    };
-    return names[widget.type] || 'Widget';
-  };
+  const widgetDisplayName = useMemo(() => {
+    return WIDGET_NAMES[widget.type] || 'Widget';
+  }, [widget.type]);
 
   return (
     <motion.div
@@ -91,7 +93,7 @@ export const WidgetContainer: React.FC<WidgetContainerProps> = ({
       {/* Widget Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-cream-50 border-b border-neutral-300">
         <h3 className="text-sm font-semibold text-neutral-900">
-          {getWidgetDisplayName()}
+          {widgetDisplayName}
         </h3>
         
         <div className="flex items-center space-x-1">
@@ -136,10 +138,13 @@ export const WidgetContainer: React.FC<WidgetContainerProps> = ({
               <span className="ml-3 text-sm text-neutral-600">Loading widget...</span>
             </div>
           }>
-            {renderWidget()}
+            {renderWidget}
           </Suspense>
         </motion.div>
       )}
     </motion.div>
   );
 };
+
+export const WidgetContainerMemo = React.memo(WidgetContainer);
+export { WidgetContainerMemo as WidgetContainer };
