@@ -2,9 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Silence ProseMirror white-space warning */
+/* ProseMirror visibility - prose classes don't work without @tailwindcss/typography */
 .ProseMirror {
-  white-space: pre-wrap;
+  color: #2c2c2c;
+  caret-color: #2c2c2c;
+  font-size: 1.125rem;
+  line-height: 1.75;
+  outline: none;
+  min-height: 1.5em;
+}
+
+.ProseMirror p {
+  margin: 0 0 0.5em;
+}
+
+.ProseMirror p:last-child {
+  margin-bottom: 0;
+}
+
+/* TipTap editor wrapper */
+.tiptap {
+  outline: none;
+  min-height: 1.5em;
 }
 
 /* Document-style page break */
@@ -50,21 +69,10 @@
   }
 }
 
-/* Document-style paper: A4 proportions with repeating page guides */
+/* Editor page surface: full width, top-left start */
 .document-pages {
-  /* A4 width: 210mm */
-  max-width: 210mm;
-  margin: 0 auto;
-  min-height: 297mm; /* A4 height - first page minimum */
-  padding: 25mm;
+  width: 100%;
+  padding: 1.5rem;
   background-color: white;
   box-shadow: 0 1px 3px theme('colors.neutral.200');
-  /* Repeating page boundary at 297mm intervals */
-  background-image: repeating-linear-gradient(
-    to bottom,
-    white 0,
-    white calc(297mm - 1px),
-    theme('colors.neutral.200') calc(297mm - 1px),
-    theme('colors.neutral.200') 297mm
-  );
 }

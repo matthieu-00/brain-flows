@@ -30,7 +30,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ className }) => 
     content: currentDocument?.content || '',
     editorProps: {
       attributes: {
-        class: 'prose prose-lg max-w-none focus:outline-none caret-neutral-900',
+        class: 'focus:outline-none',
       },
     },
     onUpdate: ({ editor }) => {
@@ -69,10 +69,13 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ className }) => 
     };
   }, []);
 
-  // Update editor content when document changes
+  // Sync editor content only when switching documents (not on every edit)
+  const lastDocIdRef = useRef<string | null>(null);
   useEffect(() => {
-    if (editor && currentDocument && editor.getHTML() !== currentDocument.content) {
+    if (!editor || !currentDocument) return;
+    if (lastDocIdRef.current !== currentDocument.id) {
       editor.commands.setContent(currentDocument.content);
+      lastDocIdRef.current = currentDocument.id;
     }
   }, [currentDocument, editor]);
 
@@ -113,8 +116,11 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ className }) => 
         </button>
       </div>
 
-      {/* Editor Content */}
-      <div className="flex-1 min-h-0 overflow-y-auto cursor-text">
+      {/* Editor Content - single scroll container, content starts at top */}
+      <div
+        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden cursor-text"
+        onClick={() => editor.commands.focus()}
+      >
         <div className="document-pages">
           <EditorContent editor={editor} />
         </div>
