@@ -79,7 +79,7 @@ export const useDocumentStore = create<DocumentState>()(
         const { documents } = get();
         const document = documents.find(doc => doc.id === id);
         if (document) {
-          set({ currentDocument: document });
+          set({ currentDocument: document, hasUnsavedChanges: false });
         }
       },
 

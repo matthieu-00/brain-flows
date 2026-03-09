@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { FileText } from 'lucide-react';
 import { useDocumentStore } from '../../store/documentStore';
 import { PageBreak } from '../../extensions/PageBreak';
+import { DocumentSwitcher } from './DocumentSwitcher';
 
 interface RichTextEditorProps {
   className?: string;
@@ -106,6 +107,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ className }) => 
           className="text-lg font-semibold bg-transparent border-none outline-none focus:ring-0 text-neutral-900 flex-1"
           placeholder="Document title..."
         />
+        <DocumentSwitcher />
         <button
           type="button"
           onClick={() => editor.chain().focus().setPageBreak().run()}
