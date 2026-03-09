@@ -118,10 +118,10 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ className }) => 
 
       {/* Editor Content - single scroll container, content starts at top */}
       <div
-        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden cursor-text"
+        className="flex-1 min-h-0 w-full overflow-y-auto overflow-x-hidden cursor-text"
         onClick={() => editor.commands.focus()}
       >
-        <div className="document-pages">
+        <div className="document-pages w-full">
           <EditorContent editor={editor} />
         </div>
       </div>
