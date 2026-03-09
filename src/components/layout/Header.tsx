@@ -8,20 +8,23 @@ import {
   Maximize, 
   Minimize, 
   User,
-  FileText
+  FileText,
+  FilePlus,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useDocumentStore } from '../../store/documentStore';
 import { useLayoutStore } from '../../store/layoutStore';
 import { Button } from '../ui/Button';
 import { SettingsModal } from './SettingsModal';
+import { NewDocumentPrompt } from '../editor/NewDocumentPrompt';
 
 export const Header: React.FC = () => {
   const { user, logout } = useAuthStore();
-  const { saveDocument, exportDocument } = useDocumentStore();
+  const { saveDocument, exportDocument, createDocument, hasUnsavedChanges, currentDocument } = useDocumentStore();
   const { distractionFreeMode, toggleDistractionFreeMode } = useLayoutStore();
   const [showSettings, setShowSettings] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showNewDocPrompt, setShowNewDocPrompt] = useState(false);
 
   const handleExport = (format: 'pdf' | 'docx' | 'txt') => {
     exportDocument(format);
@@ -29,6 +32,35 @@ export const Header: React.FC = () => {
 
   const handleSave = () => {
     saveDocument();
+  };
+
+  const handleNewDocument = () => {
+    const hasContent = currentDocument && (
+      currentDocument.content.replace(/<[^>]*>/g, '').trim().length > 0 ||
+      currentDocument.title !== 'Untitled Document'
+    );
+    if (hasContent && hasUnsavedChanges) {
+      setShowNewDocPrompt(true);
+    } else {
+      createDocument();
+    }
+  };
+
+  const handleSaveAndNew = () => {
+    saveDocument();
+    createDocument();
+    setShowNewDocPrompt(false);
+  };
+
+  const handleExportAndNew = () => {
+    exportDocument('pdf');
+    createDocument();
+    setShowNewDocPrompt(false);
+  };
+
+  const handleDiscardAndNew = () => {
+    createDocument();
+    setShowNewDocPrompt(false);
   };
 
   return (
@@ -49,6 +81,18 @@ export const Header: React.FC = () => {
 
           {/* Right side */}
           <div className="flex items-center space-x-2">
+            {/* New Document */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleNewDocument}
+              className="hidden sm:flex"
+              title="New document"
+            >
+              <FilePlus className="w-4 h-4 mr-1" />
+              New
+            </Button>
+
             {/* Save Button */}
             <Button
               variant="outline"
@@ -153,6 +197,14 @@ export const Header: React.FC = () => {
       <SettingsModal
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
+      />
+
+      <NewDocumentPrompt
+        isOpen={showNewDocPrompt}
+        onSaveAndNew={handleSaveAndNew}
+        onExportAndNew={handleExportAndNew}
+        onDiscardAndNew={handleDiscardAndNew}
+        onCancel={() => setShowNewDocPrompt(false)}
       />
     </>
   );

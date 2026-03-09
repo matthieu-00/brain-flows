@@ -1,3 +1,70 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Silence ProseMirror white-space warning */
+.ProseMirror {
+  white-space: pre-wrap;
+}
+
+/* Document-style page break */
+.page-break {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 2rem;
+  margin: 1.5rem 0;
+  border: none;
+  position: relative;
+}
+
+.page-break::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 0;
+  border-top: 2px dashed theme('colors.neutral.300');
+}
+
+.page-break::after {
+  content: 'Page break';
+  position: relative;
+  padding: 0 0.75rem;
+  font-size: 0.75rem;
+  color: theme('colors.neutral.400');
+  background: white;
+}
+
+@media print {
+  .page-break {
+    height: 0;
+    margin: 0;
+    page-break-after: always;
+  }
+
+  .page-break::before,
+  .page-break::after {
+    display: none;
+  }
+}
+
+/* Document-style paper: A4 proportions with repeating page guides */
+.document-pages {
+  /* A4 width: 210mm */
+  max-width: 210mm;
+  margin: 0 auto;
+  min-height: 297mm; /* A4 height - first page minimum */
+  padding: 25mm;
+  background-color: white;
+  box-shadow: 0 1px 3px theme('colors.neutral.200');
+  /* Repeating page boundary at 297mm intervals */
+  background-image: repeating-linear-gradient(
+    to bottom,
+    white 0,
+    white calc(297mm - 1px),
+    theme('colors.neutral.200') calc(297mm - 1px),
+    theme('colors.neutral.200') 297mm
+  );
+}

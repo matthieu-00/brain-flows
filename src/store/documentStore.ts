@@ -2,12 +2,14 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { Document } from '../types';
 import { dateReplacer, dateReviver } from '../utils/persistDates';
+import { exportToPdf } from '../utils/exportPdf';
 
 interface DocumentState {
   currentDocument: Document | null;
   documents: Document[];
   isAutoSaveEnabled: boolean;
   lastSaved: Date | null;
+  hasUnsavedChanges: boolean;
   createDocument: (title?: string) => Document;
   updateDocument: (id: string, updates: Partial<Document>) => void;
   deleteDocument: (id: string) => void;
@@ -24,6 +26,7 @@ export const useDocumentStore = create<DocumentState>()(
       documents: [],
       isAutoSaveEnabled: true,
       lastSaved: null,
+      hasUnsavedChanges: false,
 
       createDocument: (title = 'Untitled Document') => {
         const newDoc: Document = {
@@ -39,6 +42,8 @@ export const useDocumentStore = create<DocumentState>()(
         set(state => ({
           documents: [...state.documents, newDoc],
           currentDocument: newDoc,
+          hasUnsavedChanges: false,
+          lastSaved: null,
         }));
 
         return newDoc;
@@ -57,6 +62,7 @@ export const useDocumentStore = create<DocumentState>()(
           currentDocument: state.currentDocument?.id === id 
             ? { ...state.currentDocument, ...updatedDoc }
             : state.currentDocument,
+          hasUnsavedChanges: true,
         }));
       },
 
@@ -78,14 +84,14 @@ export const useDocumentStore = create<DocumentState>()(
       },
 
       saveDocument: () => {
-        set({ lastSaved: new Date() });
+        set({ lastSaved: new Date(), hasUnsavedChanges: false });
         // Document is already persisted via Zustand persist middleware
       },
 
       autoSave: () => {
         const { isAutoSaveEnabled, currentDocument } = get();
         if (isAutoSaveEnabled && currentDocument) {
-          set({ lastSaved: new Date() });
+          set({ lastSaved: new Date(), hasUnsavedChanges: false });
         }
       },
 
@@ -93,14 +99,23 @@ export const useDocumentStore = create<DocumentState>()(
         const { currentDocument } = get();
         if (!currentDocument) return;
 
-        // Mock export functionality
-        const blob = new Blob([currentDocument.content], { 
-          type: format === 'txt' ? 'text/plain' : 'application/octet-stream' 
-        });
+        const title = currentDocument.title || 'document';
+
+        if (format === 'pdf') {
+          exportToPdf(currentDocument.content, title);
+          return;
+        }
+
+        // Plain text export
+        const content = format === 'txt'
+          ? new DOMParser().parseFromString(currentDocument.content, 'text/html').body.textContent ?? ''
+          : currentDocument.content;
+
+        const blob = new Blob([content], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `${currentDocument.title}.${format}`;
+        link.download = `${title}.${format}`;
         link.click();
         URL.revokeObjectURL(url);
       },
