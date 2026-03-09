@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
 import { Document } from '../types';
+import { dateReplacer, dateReviver } from '../utils/persistDates';
 
 interface DocumentState {
   currentDocument: Document | null;
@@ -106,6 +107,10 @@ export const useDocumentStore = create<DocumentState>()(
     }),
     {
       name: 'document-storage',
+      storage: createJSONStorage(() => localStorage, {
+        replacer: dateReplacer,
+        reviver: dateReviver,
+      }),
     }
   )
 );

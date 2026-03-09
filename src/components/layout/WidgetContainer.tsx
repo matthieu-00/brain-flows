@@ -4,6 +4,7 @@ import { X, Minimize2, Maximize2 } from 'lucide-react';
 import { Widget } from '../../types';
 import { useLayoutStore } from '../../store/layoutStore';
 import { Button } from '../ui/Button';
+import { ErrorBoundary } from '../ErrorBoundary';
 
 // Lazy load widgets for better performance
 const StickyNotesWidget = React.lazy(() => import('../widgets/StickyNotesWidget'));
@@ -138,7 +139,24 @@ const WidgetContainer: React.FC<WidgetContainerProps> = ({
               <span className="ml-3 text-sm text-neutral-600">Loading widget...</span>
             </div>
           }>
-            {renderWidget}
+            <ErrorBoundary
+              fallback={
+                <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                  <p className="font-semibold">Widget failed to render</p>
+                  <p className="mt-1">Try removing and adding this widget again.</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => removeWidget(widget.id)}
+                    className="mt-3 border-red-300 text-red-700 hover:bg-red-100"
+                  >
+                    Remove widget
+                  </Button>
+                </div>
+              }
+            >
+              {renderWidget}
+            </ErrorBoundary>
           </Suspense>
         </motion.div>
       )}

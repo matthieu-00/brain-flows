@@ -6,7 +6,7 @@ import { Chessboard } from 'react-chessboard';
 import { Chess } from 'chess.js';
 import { useLayoutStore } from '../../store/layoutStore';
 import { Widget } from '../../types';
-import { RotateCcw, Play, Pause } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 import { Button } from '../ui/Button';
 
 interface ChessWidgetProps {
@@ -27,6 +27,7 @@ const ChessWidget: React.FC<ChessWidgetProps> = ({ widget }) => {
   // Initialize chess game
   const [game, setGame] = useState(() => new Chess());
   const [gamePosition, setGamePosition] = useState(game.fen());
+  const [invalidMoveMessage, setInvalidMoveMessage] = useState('');
   
   // Load saved game state
   useEffect(() => {
@@ -63,13 +64,15 @@ const ChessWidget: React.FC<ChessWidgetProps> = ({ widget }) => {
       });
 
       if (move) {
+        setInvalidMoveMessage('');
         setGame(gameCopy);
         setGamePosition(gameCopy.fen());
         saveGameState(gameCopy);
         return true;
       }
-    } catch (error) {
+    } catch {
       // Invalid move
+      setInvalidMoveMessage('Invalid move. Try a legal move.');
       return false;
     }
     
@@ -81,6 +84,7 @@ const ChessWidget: React.FC<ChessWidgetProps> = ({ widget }) => {
     const newGame = new Chess();
     setGame(newGame);
     setGamePosition(newGame.fen());
+    setInvalidMoveMessage('');
     saveGameState(newGame);
   }, [saveGameState]);
 
@@ -124,6 +128,9 @@ const ChessWidget: React.FC<ChessWidgetProps> = ({ widget }) => {
             <p className="text-xs text-sage-700 mt-1">
               Last move: {game.history().slice(-1)[0]}
             </p>
+          )}
+          {invalidMoveMessage && (
+            <p className="text-xs text-red-600 mt-1">{invalidMoveMessage}</p>
           )}
         </div>
 

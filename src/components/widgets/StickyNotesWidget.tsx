@@ -1,7 +1,7 @@
 // Attribution: Based on Sticky-Notes-React
 // Repository: https://github.com/divanov11/Sticky-Notes-React
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Plus, X, Palette } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Widget } from '../../types';
@@ -186,45 +186,45 @@ const StickyNoteComponent: React.FC<StickyNoteComponentProps> = ({
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const dragStartRef = useRef({ x: 0, y: 0 });
   const noteRef = useRef<HTMLDivElement>(null);
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (isEditing) return;
-    
-    setIsDragging(true);
-    setDragStart({
+
+    dragStartRef.current = {
       x: e.clientX - note.position.x,
       y: e.clientY - note.position.y,
-    });
-  };
-
-  const handleMouseMove = (e: MouseEvent) => {
-    if (!isDragging) return;
-
-    const newPosition = {
-      x: Math.max(0, Math.min(250, e.clientX - dragStart.x)),
-      y: Math.max(0, Math.min(200, e.clientY - dragStart.y)),
     };
-
-    onDrag(newPosition);
+    setIsDragging(true);
   };
 
-  const handleMouseUp = () => {
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      const newPosition = {
+        x: Math.max(0, Math.min(250, e.clientX - dragStartRef.current.x)),
+        y: Math.max(0, Math.min(200, e.clientY - dragStartRef.current.y)),
+      };
+      onDrag(newPosition);
+    },
+    [onDrag]
+  );
+
+  const handleMouseUp = useCallback(() => {
     setIsDragging(false);
-  };
+  }, []);
 
   React.useEffect(() => {
     if (isDragging) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
-      
+
       return () => {
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  }, [isDragging, dragStart]);
+  }, [isDragging, handleMouseMove, handleMouseUp]);
 
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     onUpdate({ content: e.target.value });

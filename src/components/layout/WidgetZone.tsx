@@ -1,7 +1,8 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ImperativePanelGroupHandle } from 'react-resizable-panels';
+import { useShallow } from 'zustand/react/shallow';
 import { useLayoutStore } from '../../store/layoutStore';
 import { useUIStore } from '../../store/uiStore';
 import { WidgetZone as WidgetZoneType } from '../../types';
@@ -12,7 +13,6 @@ interface WidgetZoneProps {
   zone: WidgetZoneType;
   className?: string;
   panelGroupRef: React.RefObject<ImperativePanelGroupHandle>;
-  panelId: string;
 }
 
 const EmptyStateIcon: React.FC = () => (
@@ -31,12 +31,15 @@ const EmptyStateIcon: React.FC = () => (
   </svg>
 );
 
-export const WidgetZone: React.FC<WidgetZoneProps> = ({ zone, className, panelGroupRef, panelId }) => {
-  // Use Zustand selectors to prevent unnecessary re-renders
-  const widgets = useLayoutStore((state) => 
-    state.widgets
-      .filter(w => w.zone === zone && w.isEnabled)
-      .sort((a, b) => a.position - b.position)
+export const WidgetZone: React.FC<WidgetZoneProps> = ({ zone, className, panelGroupRef }) => {
+  // Use useShallow so the selector result is compared by value, not reference.
+  // Without it, filter/sort returns a new array each time, causing infinite re-renders.
+  const widgets = useLayoutStore(
+    useShallow((state) =>
+      state.widgets
+        .filter((w) => w.zone === zone && w.isEnabled)
+        .sort((a, b) => a.position - b.position)
+    )
   );
   const isCollapsed = useLayoutStore((state) => {
     const { layoutConfig } = state;
@@ -51,78 +54,78 @@ export const WidgetZone: React.FC<WidgetZoneProps> = ({ zone, className, panelGr
   const toggleZoneCollapsedWithPanelGroup = useLayoutStore((state) => state.toggleZoneCollapsedWithPanelGroup);
   const openWidgetModal = useUIStore((state) => state.openWidgetModal);
   
-  const getCollapseIcon = () => {
+  const getCollapseIcon = (iconClass: string) => {
     if (isCollapsed) {
       switch (zone) {
-        case 'top': return <ChevronDown className="w-4 h-4" />;
-        case 'bottom': return <ChevronUp className="w-4 h-4" />;
-        case 'left': return <ChevronRight className="w-4 h-4" />;
-        case 'right': return <ChevronLeft className="w-4 h-4" />;
-        default: return <Plus className="w-4 h-4" />;
+        case 'top': return <ChevronDown className={iconClass} />;
+        case 'bottom': return <ChevronUp className={iconClass} />;
+        case 'left': return <ChevronRight className={iconClass} />;
+        case 'right': return <ChevronLeft className={iconClass} />;
+        default: return <ChevronRight className={iconClass} />;
       }
     } else {
       switch (zone) {
-        case 'top': return <ChevronUp className="w-4 h-4" />;
-        case 'bottom': return <ChevronDown className="w-4 h-4" />;
-        case 'left': return <ChevronLeft className="w-4 h-4" />;
-        case 'right': return <ChevronRight className="w-4 h-4" />;
-        default: return <ChevronUp className="w-4 h-4" />;
+        case 'top': return <ChevronUp className={iconClass} />;
+        case 'bottom': return <ChevronDown className={iconClass} />;
+        case 'left': return <ChevronLeft className={iconClass} />;
+        case 'right': return <ChevronRight className={iconClass} />;
+        default: return <ChevronUp className={iconClass} />;
       }
     }
   };
 
-  const getHeaderPosition = () => {
+  // Chevron on panel border (edge adjacent to resize handle)
+  const getControlPosition = () => {
     switch (zone) {
-      case 'top': return 'absolute top-2 right-2';
-      case 'bottom': return 'absolute top-2 right-2';
-      case 'left': return 'absolute top-2 left-2';
-      case 'right': return 'absolute top-2 right-2';
-      default: return 'absolute top-2 right-2';
+      case 'left':
+        return 'right-0 top-1/2 -translate-y-1/2';
+      case 'right':
+        return 'left-0 top-1/2 -translate-y-1/2';
+      case 'top':
+        return 'bottom-0 left-1/2 -translate-x-1/2';
+      case 'bottom':
+        return 'top-0 left-1/2 -translate-x-1/2';
+      default:
+        return 'right-0 top-1/2 -translate-y-1/2';
     }
   };
 
   const getHeaderVisibility = () => {
     if (isCollapsed) {
-      return 'opacity-100 bg-sage-200 border border-sage-300 shadow-sm';
+      return 'opacity-100';
     } else {
-      return 'opacity-0 group-hover:opacity-100 group-hover:bg-neutral-100 group-hover:border group-hover:border-neutral-300 group-hover:shadow-sm';
+      return 'opacity-0 group-hover:opacity-100';
     }
   };
 
+  // Keep one compact size in all states.
+  const chevronSizeClass = '!w-7 !h-7 !min-w-7 !min-h-7';
+  const chevronIconClass = 'w-3.5 h-3.5';
+  const chevronButtonVisualClass = isCollapsed
+    ? 'border border-sage-200 shadow-sm !bg-sage-100 hover:!bg-sage-200'
+    : '!bg-transparent hover:!bg-sage-100';
+
   return (
     <div className={`h-full bg-cream-100 border-neutral-300 relative group ${className}`}>
-      {/* Floating Header with Controls */}
-      <div className={`
-        ${getHeaderPosition()}
-        ${getHeaderVisibility()}
-        transition-all duration-200 ease-in-out
-        rounded-lg z-10
-        flex flex-row items-center space-x-1
-        p-1
-      `}>
-        {/* Collapse/Expand Button */}
+      {/* Chevron on panel border - collapse/expand */}
+      <div
+        className={`
+          absolute z-10 w-fit
+          p-0
+          ${getControlPosition()}
+          ${getHeaderVisibility()}
+          transition-opacity duration-200 ease-in-out
+        `}
+      >
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => toggleZoneCollapsedWithPanelGroup(zone, panelGroupRef, panelId)}
-          className="w-8 h-8 p-1 flex items-center justify-center hover:bg-neutral-200"
+          onClick={() => toggleZoneCollapsedWithPanelGroup(zone, panelGroupRef)}
+          className={`${chevronSizeClass} ${chevronButtonVisualClass} !p-0 flex items-center justify-center text-sage-900 focus:!ring-0 focus:!ring-offset-0`}
           title={isCollapsed ? `Expand ${zone} zone` : `Collapse ${zone} zone`}
         >
-          {getCollapseIcon()}
+          {getCollapseIcon(chevronIconClass)}
         </Button>
-
-        {/* Add Widget Button - Only show when expanded */}
-        {!isCollapsed && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => openWidgetModal('add', zone)}
-            className="w-8 h-8 p-1 flex items-center justify-center hover:bg-sage-200 text-sage-700"
-            title={`Add widget to ${zone} zone`}
-          >
-            <Plus className="w-4 h-4" />
-          </Button>
-        )}
       </div>
 
       {/* Zone Content */}
@@ -136,12 +139,15 @@ export const WidgetZone: React.FC<WidgetZoneProps> = ({ zone, className, panelGr
           >
             {widgets.length === 0 ? (
               <div className="flex items-center justify-center h-full">
-                <div className="text-center text-neutral-400">
+                <button
+                  onClick={() => openWidgetModal('add', zone)}
+                  className="text-center text-neutral-400 hover:text-sage-700 transition-colors cursor-pointer"
+                >
                   <div className="flex justify-center mb-3">
                     <EmptyStateIcon />
                   </div>
-                  <p className="text-sm">Click the + button to add widgets.</p>
-                </div>
+                  <p className="text-sm">Click to add widgets.</p>
+                </button>
               </div>
             ) : (
               <div className={`${

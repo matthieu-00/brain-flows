@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { MapPin, RefreshCw, Sun, Cloud, CloudRain } from 'lucide-react';
 import { Widget } from '../../types';
 import { useLayoutStore } from '../../store/layoutStore';
 import { Button } from '../ui/Button';
+import { getWeatherKeyError } from '../../utils/apiKeyValidation';
 
 interface WeatherWidgetProps {
   widget: Widget;
@@ -18,9 +19,11 @@ interface WeatherData {
 }
 
 const WeatherWidget: React.FC<WeatherWidgetProps> = ({ widget }) => {
-  const { updateWidget } = useLayoutStore();
+  const { updateWidget, settings } = useLayoutStore();
   const [isLoading, setIsLoading] = useState(false);
   const [location, setLocation] = useState(widget.data?.location || '');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [lastRequestedCity, setLastRequestedCity] = useState('');
 
   const weatherData: WeatherData | null = widget.data?.weather || null;
 
@@ -60,33 +63,59 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ widget }) => {
     },
   };
 
-  const fetchWeather = async (city: string) => {
+  const fetchWeather = async (city: string, retries = 2) => {
     setIsLoading(true);
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Get mock data or default
-    const cityKey = Object.keys(mockWeatherData).find(key => 
-      key.toLowerCase().includes(city.toLowerCase())
-    );
-    
-    const weather = cityKey 
-      ? mockWeatherData[cityKey as keyof typeof mockWeatherData]
-      : {
-          location: city,
-          temperature: Math.floor(Math.random() * 30) + 10,
-          condition: ['Sunny', 'Cloudy', 'Partly Cloudy', 'Rainy'][Math.floor(Math.random() * 4)],
-          humidity: Math.floor(Math.random() * 40) + 40,
-          windSpeed: Math.floor(Math.random() * 20) + 5,
-          icon: 'partly-cloudy',
-        };
+    setErrorMessage('');
+    setLastRequestedCity(city);
 
-    updateWidget(widget.id, {
-      data: { ...widget.data, weather, location: city }
-    });
-    
-    setIsLoading(false);
+    try {
+      // Simulate API delay
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Keep weather key checks in place for real API integration
+      if (settings.apiKeys?.weather) {
+        const weatherKeyError = getWeatherKeyError(settings.apiKeys.weather);
+        if (weatherKeyError) {
+          throw new Error(weatherKeyError);
+        }
+      }
+
+      // Simulate occasional API failure for retry/fallback behavior
+      if (Math.random() < 0.1) {
+        throw new Error('Temporary weather service error.');
+      }
+
+      const cityKey = Object.keys(mockWeatherData).find((key) =>
+        key.toLowerCase().includes(city.toLowerCase())
+      );
+
+      const weather = cityKey
+        ? mockWeatherData[cityKey as keyof typeof mockWeatherData]
+        : {
+            location: city,
+            temperature: Math.floor(Math.random() * 30) + 10,
+            condition: ['Sunny', 'Cloudy', 'Partly Cloudy', 'Rainy'][Math.floor(Math.random() * 4)],
+            humidity: Math.floor(Math.random() * 40) + 40,
+            windSpeed: Math.floor(Math.random() * 20) + 5,
+            icon: 'partly-cloudy',
+          };
+
+      updateWidget(widget.id, {
+        data: { ...widget.data, weather, location: city },
+      });
+    } catch (error) {
+      if (retries > 0) {
+        const backoff = (3 - retries) * 600;
+        await new Promise((resolve) => setTimeout(resolve, backoff));
+        await fetchWeather(city, retries - 1);
+        return;
+      }
+
+      console.error('Weather fetch failed:', error);
+      setErrorMessage('Could not fetch weather data. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const getCurrentLocation = () => {
@@ -94,12 +123,14 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ widget }) => {
       navigator.geolocation.getCurrentPosition(
         () => {
           // Mock: use a default city for location
-          fetchWeather('Current Location');
+          void fetchWeather('Current Location');
         },
         () => {
-          alert('Unable to get your location. Please enter a city manually.');
+          setErrorMessage('Unable to get your location. Please enter a city manually.');
         }
       );
+    } else {
+      setErrorMessage('Geolocation is not supported by your browser.');
     }
   };
 
@@ -119,7 +150,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ widget }) => {
   const handleLocationSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (location.trim()) {
-      fetchWeather(location.trim());
+      void fetchWeather(location.trim());
     }
   };
 
@@ -160,9 +191,30 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ widget }) => {
           <MapPin className="w-4 h-4 mr-1" />
           Use Current Location
         </Button>
+        {!settings.apiKeys?.weather && (
+          <p className="text-xs text-gray-500">
+            Add a Weather API key in Settings when real API integration is enabled.
+          </p>
+        )}
       </form>
 
       {/* Weather Display */}
+      {errorMessage && (
+        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+          <p>{errorMessage}</p>
+          {lastRequestedCity && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void fetchWeather(lastRequestedCity)}
+              className="mt-2"
+            >
+              Retry
+            </Button>
+          )}
+        </div>
+      )}
+
       {weatherData ? (
         <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4">
           <div className="text-center space-y-3">
@@ -218,7 +270,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ widget }) => {
               key={city}
               variant="outline"
               size="sm"
-              onClick={() => fetchWeather(city)}
+              onClick={() => void fetchWeather(city)}
               disabled={isLoading}
               className="text-xs py-1"
             >

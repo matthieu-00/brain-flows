@@ -6,7 +6,7 @@ import { RichTextEditor } from '../editor/RichTextEditor';
 import { WidgetZone } from './WidgetZone';
 
 export const MainLayout: React.FC = () => {
-  const { distractionFreeMode, layoutConfig, updateLayoutConfig } = useLayoutStore();
+  const { distractionFreeMode, layoutConfig, handlePanelResize } = useLayoutStore();
   
   // Refs for PanelGroups to control collapsing
   const verticalGroupRef = React.useRef<ImperativePanelGroupHandle>(null);
@@ -33,14 +33,14 @@ export const MainLayout: React.FC = () => {
         <Panel
           id="top-panel"
           size={layoutConfig.topZoneHeight}
-          minSize={1}
-          collapsedSize={1}
+          minSize={3}
+          collapsedSize={3}
           collapsible
           onResize={(size) => {
-            updateLayoutConfig({ topZoneHeight: size });
+            handlePanelResize('top', size);
           }}
         >
-          <WidgetZone zone="top" panelGroupRef={verticalGroupRef} panelId="top-panel" />
+          <WidgetZone zone="top" panelGroupRef={verticalGroupRef} />
         </Panel>
 
         <PanelResizeHandle className="h-1 bg-neutral-300 hover:bg-sage-700 transition-colors" />
@@ -52,22 +52,22 @@ export const MainLayout: React.FC = () => {
             <Panel
               id="left-panel"
               size={layoutConfig.leftZoneWidth}
-              minSize={1}
-              collapsedSize={1}
+              minSize={3}
+              collapsedSize={3}
               collapsible
               onResize={(size) => {
-                updateLayoutConfig({ leftZoneWidth: size });
+                handlePanelResize('left', size);
               }}
             >
-              <WidgetZone zone="left" panelGroupRef={horizontalGroupRef} panelId="left-panel" />
+              <WidgetZone zone="left" panelGroupRef={horizontalGroupRef} />
             </Panel>
 
             <PanelResizeHandle className="w-1 bg-neutral-300 hover:bg-sage-700 transition-colors" />
 
             {/* Central Editor */}
             <Panel defaultSize={50} minSize={30}>
-              <div className="h-full flex items-center justify-center p-4">
-                <RichTextEditor className="w-full h-full shadow-lg" />
+              <div className="h-full flex flex-col min-h-0 p-4">
+                <RichTextEditor className="flex-1 min-h-0 w-full shadow-lg" />
               </div>
             </Panel>
 
@@ -77,14 +77,14 @@ export const MainLayout: React.FC = () => {
             <Panel
               id="right-panel"
               size={layoutConfig.rightZoneWidth}
-              minSize={1}
-              collapsedSize={1}
+              minSize={3}
+              collapsedSize={3}
               collapsible
               onResize={(size) => {
-                updateLayoutConfig({ rightZoneWidth: size });
+                handlePanelResize('right', size);
               }}
             >
-              <WidgetZone zone="right" panelGroupRef={horizontalGroupRef} panelId="right-panel" />
+              <WidgetZone zone="right" panelGroupRef={horizontalGroupRef} />
             </Panel>
           </PanelGroup>
         </Panel>
@@ -95,14 +95,14 @@ export const MainLayout: React.FC = () => {
         <Panel
           id="bottom-panel"
           size={layoutConfig.bottomZoneHeight}
-          minSize={1}
-          collapsedSize={1}
+          minSize={3}
+          collapsedSize={3}
           collapsible
           onResize={(size) => {
-            updateLayoutConfig({ bottomZoneHeight: size });
+            handlePanelResize('bottom', size);
           }}
         >
-          <WidgetZone zone="bottom" panelGroupRef={verticalGroupRef} panelId="bottom-panel" />
+          <WidgetZone zone="bottom" panelGroupRef={verticalGroupRef} />
         </Panel>
       </PanelGroup>
     </div>

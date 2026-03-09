@@ -27,7 +27,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ className }) => 
     content: currentDocument?.content || '',
     editorProps: {
       attributes: {
-        class: 'prose prose-lg max-w-none focus:outline-none min-h-[60vh] px-8 py-6',
+        class: 'prose prose-lg max-w-none focus:outline-none min-h-[60vh] px-8 py-6 caret-neutral-900',
       },
     },
     onUpdate: ({ editor }) => {
@@ -85,53 +85,28 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ className }) => 
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`bg-white rounded-lg shadow-sm border border-neutral-300 ${className}`}
+      className={`bg-white rounded-lg shadow-sm border border-neutral-300 flex flex-col min-h-0 overflow-hidden ${className}`}
     >
       {/* Editor Toolbar */}
-      <div className="flex items-center justify-between px-6 py-3 border-b border-neutral-300">
-        <div className="flex items-center space-x-2">
-          <input
-            type="text"
-            value={currentDocument?.title || 'Untitled Document'}
-            onChange={(e) => {
-              if (currentDocument) {
-                updateDocument(currentDocument.id, { title: e.target.value });
-              }
-            }}
-            className="text-lg font-semibold bg-transparent border-none outline-none focus:ring-0 text-neutral-900"
-            placeholder="Document title..."
-          />
-        </div>
-        
-        <div className="flex items-center space-x-4 text-sm text-neutral-600">
-          <span>{currentDocument?.wordCount || 0} words</span>
-          <span>{currentDocument?.characterCount || 0} characters</span>
-          <div className="flex items-center space-x-1">
-            <div className="w-2 h-2 bg-sage-700 rounded-full"></div>
-            <span>Auto-saved</span>
-          </div>
-        </div>
+      <div className="flex items-center px-6 py-3 border-b border-neutral-300">
+        <input
+          type="text"
+          value={currentDocument?.title || 'Untitled Document'}
+          onChange={(e) => {
+            if (currentDocument) {
+              updateDocument(currentDocument.id, { title: e.target.value });
+            }
+          }}
+          className="text-lg font-semibold bg-transparent border-none outline-none focus:ring-0 text-neutral-900 w-full"
+          placeholder="Document title..."
+        />
       </div>
 
       {/* Editor Content */}
-      <div className="min-h-[60vh] max-h-[80vh] overflow-y-auto">
+      <div className="flex-1 min-h-0 overflow-y-auto cursor-text">
         <EditorContent editor={editor} />
       </div>
 
-      {/* Editor Footer */}
-      <div className="px-6 py-3 border-t border-neutral-300 bg-cream-100">
-        <div className="flex items-center justify-between text-xs text-neutral-600">
-          <span>
-            Last updated: {currentDocument?.updatedAt ? 
-              new Date(currentDocument.updatedAt).toLocaleString() : 
-              'Never'
-            }
-          </span>
-          <span>
-            {editor.storage.characterCount.characters()}/{editor.extensionManager.extensions.find(ext => ext.name === 'characterCount')?.options.limit} characters
-          </span>
-        </div>
-      </div>
     </motion.div>
   );
 };

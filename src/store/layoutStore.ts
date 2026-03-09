@@ -1,7 +1,8 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { createJSONStorage, persist } from 'zustand/middleware';
 import { ImperativePanelGroupHandle } from 'react-resizable-panels';
 import { Widget, WidgetType, WidgetZone, LayoutConfig, AppSettings } from '../types';
+import { dateReplacer, dateReviver } from '../utils/persistDates';
 
 interface LayoutState {
   widgets: Widget[];
@@ -18,20 +19,18 @@ interface LayoutState {
   
   // Layout management
   updateLayoutConfig: (updates: Partial<LayoutConfig>) => void;
-  toggleZoneCollapsed: (zone: WidgetZone) => void;
-  resizeZone: (zone: WidgetZone, size: number) => void;
+  handlePanelResize: (zone: WidgetZone, size: number) => void;
   
   // Utility functions
   getWidgetsByZone: (zone: WidgetZone) => Widget[];
   isZoneCollapsed: (zone: WidgetZone) => boolean;
-  setZoneSize: (zone: WidgetZone, size: number) => void;
   
   // Settings management
   updateSettings: (updates: Partial<AppSettings>) => void;
   toggleDistractionFreeMode: () => void;
   
   // New method for PanelGroup-based collapsing
-  toggleZoneCollapsedWithPanelGroup: (zone: WidgetZone, panelGroupRef: React.RefObject<ImperativePanelGroupHandle>, panelId: string) => void;
+  toggleZoneCollapsedWithPanelGroup: (zone: WidgetZone, panelGroupRef: React.RefObject<ImperativePanelGroupHandle>) => void;
 }
 
 const defaultLayoutConfig: LayoutConfig = {
@@ -122,45 +121,39 @@ export const useLayoutStore = create<LayoutState>()(
         }));
       },
 
-      toggleZoneCollapsed: (zone: WidgetZone) => {
+      handlePanelResize: (zone: WidgetZone, size: number) => {
+        const collapseThreshold = 4;
         set(state => {
-          const collapseKey = `is${zone.charAt(0).toUpperCase() + zone.slice(1)}Collapsed` as keyof LayoutConfig;
           const isVertical = zone === 'top' || zone === 'bottom';
-          const sizeKey = isVertical 
+          const sizeKey = isVertical
             ? `${zone}ZoneHeight` as keyof LayoutConfig
             : `${zone}ZoneWidth` as keyof LayoutConfig;
+          const collapseKey = `is${zone.charAt(0).toUpperCase() + zone.slice(1)}Collapsed` as keyof LayoutConfig;
           const previousSizeKey = isVertical
             ? `${zone}ZonePreviousHeight` as keyof LayoutConfig
             : `${zone}ZonePreviousWidth` as keyof LayoutConfig;
 
-          const isCurrentlyCollapsed = state.layoutConfig[collapseKey] as boolean;
-          const currentSize = state.layoutConfig[sizeKey] as number;
-          const previousSize = state.layoutConfig[previousSizeKey] as number | undefined;
+          const isCollapsed = size <= collapseThreshold;
+          const newLayoutConfig = {
+            ...state.layoutConfig,
+            [sizeKey]: size,
+            [collapseKey]: isCollapsed,
+          };
 
-          const newLayoutConfig = { ...state.layoutConfig };
-
-          if (!isCurrentlyCollapsed) {
-            // Collapsing: save current size and set to 1
-            newLayoutConfig[previousSizeKey] = currentSize;
-            newLayoutConfig[sizeKey] = 1;
-          } else {
-            // Expanding: restore from previous size
-            const restoreSize = (previousSize && previousSize > 1) ? previousSize : 25;
-            newLayoutConfig[sizeKey] = restoreSize;
+          // Persist the latest user-resized expanded size for future restore.
+          if (!isCollapsed) {
+            newLayoutConfig[previousSizeKey] = size;
           }
 
-          // Toggle the collapsed state
-          newLayoutConfig[collapseKey] = !isCurrentlyCollapsed;
-
-          return {
-            layoutConfig: newLayoutConfig,
-          };
+          return { layoutConfig: newLayoutConfig };
         });
       },
 
-      toggleZoneCollapsedWithPanelGroup: (zone: WidgetZone, panelGroupRef: React.RefObject<ImperativePanelGroupHandle>, panelId: string) => {
+      toggleZoneCollapsedWithPanelGroup: (zone: WidgetZone, panelGroupRef: React.RefObject<ImperativePanelGroupHandle>) => {
         const panelGroup = panelGroupRef.current;
         if (!panelGroup) return;
+        const collapsedPct = 3;
+        const minExpandedSize = zone === 'left' || zone === 'right' ? 18 : 12;
 
         // Get current layout and collapsed state
         const currentLayout = panelGroup.getLayout();
@@ -176,45 +169,46 @@ export const useLayoutStore = create<LayoutState>()(
           : `${zone}ZonePreviousWidth` as keyof LayoutConfig;
 
         let newLayout: number[];
-        let newLayoutConfig = { ...layoutConfig };
+        const newLayoutConfig = { ...layoutConfig };
 
         if (!isCurrentlyCollapsed) {
-          // Collapsing: save current size and collapse to 1%
+          // Collapsing: save current size and collapse to a compact visible strip
+          // Use 3% for all panels - minimal space while keeping controls clickable
           const currentSize = layoutConfig[sizeKey] as number;
           newLayoutConfig[previousSizeKey] = currentSize;
-          newLayoutConfig[sizeKey] = 1;
+          newLayoutConfig[sizeKey] = collapsedPct;
 
           // Calculate new layout based on zone
           if (zone === 'top') {
             // Vertical group: [top, main, bottom]
             const mainSize = currentLayout[1] || 50;
             const bottomSize = currentLayout[2] || layoutConfig.bottomZoneHeight;
-            const spaceToRedistribute = currentSize - 1;
-            newLayout = [1, mainSize + spaceToRedistribute, bottomSize];
+            const spaceToRedistribute = currentSize - collapsedPct;
+            newLayout = [collapsedPct, mainSize + spaceToRedistribute, bottomSize];
           } else if (zone === 'bottom') {
             // Vertical group: [top, main, bottom]
             const topSize = currentLayout[0] || layoutConfig.topZoneHeight;
             const mainSize = currentLayout[1] || 50;
-            const spaceToRedistribute = currentSize - 1;
-            newLayout = [topSize, mainSize + spaceToRedistribute, 1];
+            const spaceToRedistribute = currentSize - collapsedPct;
+            newLayout = [topSize, mainSize + spaceToRedistribute, collapsedPct];
           } else if (zone === 'left') {
             // Horizontal group: [left, center, right]
             const centerSize = currentLayout[1] || 50;
             const rightSize = currentLayout[2] || layoutConfig.rightZoneWidth;
-            const spaceToRedistribute = currentSize - 1;
-            newLayout = [1, centerSize + spaceToRedistribute, rightSize];
+            const spaceToRedistribute = currentSize - collapsedPct;
+            newLayout = [collapsedPct, centerSize + spaceToRedistribute, rightSize];
           } else {
             // right
             // Horizontal group: [left, center, right]
             const leftSize = currentLayout[0] || layoutConfig.leftZoneWidth;
             const centerSize = currentLayout[1] || 50;
-            const spaceToRedistribute = currentSize - 1;
-            newLayout = [leftSize, centerSize + spaceToRedistribute, 1];
+            const spaceToRedistribute = currentSize - collapsedPct;
+            newLayout = [leftSize, centerSize + spaceToRedistribute, collapsedPct];
           }
         } else {
           // Expanding: restore previous size
           const previousSize = layoutConfig[previousSizeKey] as number | undefined;
-          const restoreSize = (previousSize && previousSize > 1) ? previousSize : 25;
+          const restoreSize = Math.max(minExpandedSize, (previousSize && previousSize > collapsedPct) ? previousSize : 25);
           newLayoutConfig[sizeKey] = restoreSize;
 
           // Calculate new layout based on zone
@@ -222,26 +216,26 @@ export const useLayoutStore = create<LayoutState>()(
             // Vertical group: [top, main, bottom]
             const mainSize = currentLayout[1] || 50;
             const bottomSize = currentLayout[2] || layoutConfig.bottomZoneHeight;
-            const spaceToTake = restoreSize - 1;
+            const spaceToTake = restoreSize - collapsedPct;
             newLayout = [restoreSize, Math.max(20, mainSize - spaceToTake), bottomSize];
           } else if (zone === 'bottom') {
             // Vertical group: [top, main, bottom]
             const topSize = currentLayout[0] || layoutConfig.topZoneHeight;
             const mainSize = currentLayout[1] || 50;
-            const spaceToTake = restoreSize - 1;
+            const spaceToTake = restoreSize - collapsedPct;
             newLayout = [topSize, Math.max(20, mainSize - spaceToTake), restoreSize];
           } else if (zone === 'left') {
             // Horizontal group: [left, center, right]
             const centerSize = currentLayout[1] || 50;
             const rightSize = currentLayout[2] || layoutConfig.rightZoneWidth;
-            const spaceToTake = restoreSize - 1;
+            const spaceToTake = restoreSize - collapsedPct;
             newLayout = [restoreSize, Math.max(30, centerSize - spaceToTake), rightSize];
           } else {
             // right
             // Horizontal group: [left, center, right]
             const leftSize = currentLayout[0] || layoutConfig.leftZoneWidth;
             const centerSize = currentLayout[1] || 50;
-            const spaceToTake = restoreSize - 1;
+            const spaceToTake = restoreSize - collapsedPct;
             newLayout = [leftSize, Math.max(30, centerSize - spaceToTake), restoreSize];
           }
         }
@@ -256,31 +250,6 @@ export const useLayoutStore = create<LayoutState>()(
         set({
           layoutConfig: newLayoutConfig,
         });
-      },
-
-      resizeZone: (zone: WidgetZone, size: number) => {
-        const sizeKey = zone === 'top' || zone === 'bottom' 
-          ? `${zone}ZoneHeight` 
-          : `${zone}ZoneWidth`;
-        
-        set(state => ({
-          layoutConfig: {
-            ...state.layoutConfig,
-            [sizeKey]: Math.max(10, Math.min(80, size)), // Min 10%, Max 80%
-          },
-        }));
-      },
-
-      setZoneSize: (zone: WidgetZone, size: number) => {
-        const sizeKey = zone === 'top' || zone === 'bottom' 
-          ? `${zone}ZoneHeight` 
-          : `${zone}ZoneWidth`;
-        set(state => ({
-          layoutConfig: {
-            ...state.layoutConfig,
-            [sizeKey]: size,
-          },
-        }));
       },
 
       updateSettings: (updates: Partial<AppSettings>) => {
@@ -318,6 +287,10 @@ export const useLayoutStore = create<LayoutState>()(
     }),
     {
       name: 'layout-storage',
+      storage: createJSONStorage(() => localStorage, {
+        replacer: dateReplacer,
+        reviver: dateReviver,
+      }),
     }
   )
 );

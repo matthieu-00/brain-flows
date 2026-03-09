@@ -18,7 +18,7 @@ import { SettingsModal } from './SettingsModal';
 
 export const Header: React.FC = () => {
   const { user, logout } = useAuthStore();
-  const { currentDocument, saveDocument, exportDocument } = useDocumentStore();
+  const { saveDocument, exportDocument } = useDocumentStore();
   const { distractionFreeMode, toggleDistractionFreeMode } = useLayoutStore();
   const [showSettings, setShowSettings] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -44,12 +44,6 @@ export const Header: React.FC = () => {
             <div className="flex items-center space-x-2">
               <FileText className="w-6 h-6 text-sage-900" />
               <h1 className="text-xl font-bold text-neutral-900">brainsflow.io</h1>
-            </div>
-
-            <div className="hidden sm:flex items-center space-x-2 text-sm text-neutral-600">
-              <span>{currentDocument?.title || 'Untitled Document'}</span>
-              <span>•</span>
-              <span>{currentDocument?.wordCount || 0} words</span>
             </div>
           </div>
 
@@ -93,15 +87,6 @@ export const Header: React.FC = () => {
               )}
             </Button>
 
-            {/* Settings */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowSettings(true)}
-            >
-              <Settings className="w-4 h-4" />
-            </Button>
-
             {/* User Menu */}
             <div className="relative">
               <Button
@@ -137,6 +122,16 @@ export const Header: React.FC = () => {
                     </div>
                   </div>
                   
+                  <button
+                    onClick={() => {
+                      setShowSettings(true);
+                      setShowUserMenu(false);
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm text-neutral-900 hover:bg-sage-100 flex items-center space-x-2"
+                  >
+                    <Settings className="w-4 h-4" />
+                    <span>Settings</span>
+                  </button>
                   <button
                     onClick={() => {
                       logout();

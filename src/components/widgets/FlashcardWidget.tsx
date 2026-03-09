@@ -13,21 +13,46 @@ interface FlashcardWidgetProps {
   widget: Widget;
 }
 
+interface LegacyFlashcard {
+  id?: number | string;
+  frontText?: string;
+  backText?: string;
+  front?: unknown;
+  back?: unknown;
+}
+
 const FlashcardWidget: React.FC<FlashcardWidgetProps> = ({ widget }) => {
   const { updateWidget } = useLayoutStore();
   const [isEditing, setIsEditing] = useState(false);
   const [newFront, setNewFront] = useState('');
   const [newBack, setNewBack] = useState('');
 
-  const flashcards: Flashcard[] = widget.data?.flashcards || [];
+  const extractLegacyText = (value: unknown): string => {
+    if (typeof value === 'string') return value;
+    if (value && typeof value === 'object' && 'html' in (value as Record<string, unknown>)) {
+      const htmlNode = (value as { html?: unknown }).html;
+      if (typeof htmlNode === 'string') return htmlNode;
+      if (htmlNode && typeof htmlNode === 'object' && 'props' in (htmlNode as Record<string, unknown>)) {
+        const children = (htmlNode as { props?: { children?: unknown } }).props?.children;
+        if (typeof children === 'string') return children;
+      }
+    }
+    return '';
+  };
+
+  const flashcards: Flashcard[] = ((widget.data?.flashcards as LegacyFlashcard[] | undefined) || []).map((card) => ({
+    id: Number(card.id),
+    frontText: card.frontText ?? extractLegacyText(card.front),
+    backText: card.backText ?? extractLegacyText(card.back),
+  }));
 
   const addFlashcard = () => {
     if (!newFront.trim() || !newBack.trim()) return;
 
     const newCard: Flashcard = {
       id: Date.now(),
-      front: { html: <div className="text-center p-4">{newFront}</div> },
-      back: { html: <div className="text-center p-4">{newBack}</div> },
+      frontText: newFront.trim(),
+      backText: newBack.trim(),
     };
 
     const updatedCards = [...flashcards, newCard];
@@ -105,7 +130,7 @@ const FlashcardWidget: React.FC<FlashcardWidgetProps> = ({ widget }) => {
                     className="flex items-center justify-between p-2 bg-white rounded border"
                   >
                     <span className="text-sm truncate flex-1">
-                      {typeof card.front.html === 'string' ? card.front.html : 'Card'}
+                      {card.frontText || 'Card'}
                     </span>
                     <Button
                       variant="ghost"

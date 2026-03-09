@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { useLayoutStore } from '../../store/layoutStore';
-import { WidgetType } from '../../types';
+import { AppSettings, WidgetType } from '../../types';
+import { getOpenAIKeyError, getWeatherKeyError } from '../../utils/apiKeyValidation';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -14,6 +15,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   const { settings, updateSettings, widgets, addWidget, removeWidget } = useLayoutStore();
   const [openaiKey, setOpenaiKey] = useState(settings.apiKeys?.openai || '');
   const [weatherKey, setWeatherKey] = useState(settings.apiKeys?.weather || '');
+  const [keyErrors, setKeyErrors] = useState<{ openai?: string; weather?: string }>({});
+
+  useEffect(() => {
+    if (isOpen) {
+      setOpenaiKey(settings.apiKeys?.openai || '');
+      setWeatherKey(settings.apiKeys?.weather || '');
+      setKeyErrors({});
+    }
+  }, [isOpen, settings.apiKeys?.openai, settings.apiKeys?.weather]);
 
   const widgetTypes: { type: WidgetType; name: string; description: string; icon: string }[] = [
     { type: 'sticky-notes', name: 'Sticky Notes', description: 'Quick notes and flashcards', icon: '📝' },
@@ -29,11 +39,23 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   ];
 
   const handleSaveSettings = () => {
+    const openaiError = getOpenAIKeyError(openaiKey);
+    const weatherError = getWeatherKeyError(weatherKey);
+    const hasErrors = Boolean(openaiError || weatherError);
+
+    if (hasErrors) {
+      setKeyErrors({
+        openai: openaiError || undefined,
+        weather: weatherError || undefined,
+      });
+      return;
+    }
+
     updateSettings({
       apiKeys: {
         ...settings.apiKeys,
-        openai: openaiKey,
-        weather: weatherKey,
+        openai: openaiKey.trim(),
+        weather: weatherKey.trim(),
       },
     });
     onClose();
@@ -71,7 +93,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               </label>
               <select
                 value={settings.theme}
-                onChange={(e) => updateSettings({ theme: e.target.value as any })}
+                onChange={(e) =>
+                  updateSettings({ theme: e.target.value as AppSettings['theme'] })
+                }
                 className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sage-700 bg-white"
               >
                 <option value="light">Light</option>
@@ -110,18 +134,42 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               label="OpenAI API Key"
               type="password"
               value={openaiKey}
-              onChange={(e) => setOpenaiKey(e.target.value)}
+              onChange={(e) => {
+                setOpenaiKey(e.target.value);
+                if (keyErrors.openai) {
+                  setKeyErrors((prev) => ({ ...prev, openai: undefined }));
+                }
+              }}
+              onBlur={() => {
+                setKeyErrors((prev) => ({
+                  ...prev,
+                  openai: getOpenAIKeyError(openaiKey) || undefined,
+                }));
+              }}
               placeholder="sk-..."
               hint="Required for AI Chat widget"
+              error={keyErrors.openai}
             />
             
             <Input
               label="Weather API Key"
               type="password"
               value={weatherKey}
-              onChange={(e) => setWeatherKey(e.target.value)}
+              onChange={(e) => {
+                setWeatherKey(e.target.value);
+                if (keyErrors.weather) {
+                  setKeyErrors((prev) => ({ ...prev, weather: undefined }));
+                }
+              }}
+              onBlur={() => {
+                setKeyErrors((prev) => ({
+                  ...prev,
+                  weather: getWeatherKeyError(weatherKey) || undefined,
+                }));
+              }}
               placeholder="Your weather API key"
               hint="Required for Weather widget"
+              error={keyErrors.weather}
             />
           </div>
         </div>
@@ -174,7 +222,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               </label>
               <select
                 value={settings.exportFormat}
-                onChange={(e) => updateSettings({ exportFormat: e.target.value as any })}
+                onChange={(e) =>
+                  updateSettings({ exportFormat: e.target.value as AppSettings['exportFormat'] })
+                }
                 className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sage-700 bg-white"
               >
                 <option value="pdf">PDF</option>
