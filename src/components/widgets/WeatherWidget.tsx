@@ -143,7 +143,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ widget }) => {
       case 'cloudy':
       case 'partly-cloudy':
       default:
-        return <Cloud className="w-8 h-8 text-gray-500" />;
+        return <Cloud className="w-8 h-8 text-gray-500 dark:text-neutral-textMuted" />;
     }
   };
 
@@ -192,7 +192,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ widget }) => {
           Use Current Location
         </Button>
         {!settings.apiKeys?.weather && (
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-neutral-textMuted">
             Add a Weather API key in Settings when real API integration is enabled.
           </p>
         )}
@@ -220,7 +220,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ widget }) => {
           <div className="text-center space-y-3">
             <div className="flex items-center justify-center space-x-2">
               <MapPin className="w-4 h-4 text-gray-600" />
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-sm font-medium text-gray-700 dark:text-neutral-textMuted">
                 {weatherData.location}
               </span>
             </div>
@@ -228,10 +228,10 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ widget }) => {
             <div className="flex items-center justify-center space-x-4">
               {getWeatherIcon(weatherData.icon)}
               <div>
-                <div className="text-3xl font-bold text-gray-800">
+                <div className="text-3xl font-bold text-gray-800 dark:text-neutral-text">
                   {weatherData.temperature}°C
                 </div>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-gray-600 dark:text-neutral-textMuted">
                   {weatherData.condition}
                 </div>
               </div>
@@ -242,19 +242,19 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ widget }) => {
                 <div className="text-lg font-semibold text-gray-800">
                   {weatherData.humidity}%
                 </div>
-                <div className="text-xs text-gray-600">Humidity</div>
+                <div className="text-xs text-gray-600 dark:text-neutral-textMuted">Humidity</div>
               </div>
               <div className="text-center">
                 <div className="text-lg font-semibold text-gray-800">
                   {weatherData.windSpeed} km/h
                 </div>
-                <div className="text-xs text-gray-600">Wind Speed</div>
+                <div className="text-xs text-gray-600 dark:text-neutral-textMuted">Wind Speed</div>
               </div>
             </div>
           </div>
         </div>
       ) : (
-        <div className="text-center py-8 text-gray-500">
+        <div className="text-center py-8 text-gray-500 dark:text-neutral-textMuted">
           <div className="text-4xl mb-2">🌤️</div>
           <p className="text-sm">No weather data yet</p>
           <p className="text-xs">Enter a city above to get started</p>
@@ -263,7 +263,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ widget }) => {
 
       {/* Popular Cities */}
       <div className="space-y-2">
-        <div className="text-xs font-medium text-gray-700">Quick access:</div>
+        <div className="text-xs font-medium text-gray-700 dark:text-neutral-textMuted">Quick access:</div>
         <div className="grid grid-cols-2 gap-1">
           {Object.keys(mockWeatherData).map((city) => (
             <Button

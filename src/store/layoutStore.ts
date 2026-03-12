@@ -53,7 +53,12 @@ const defaultSettings: AppSettings = {
   autoSaveInterval: 30,
   distractionFreeMode: false,
   exportFormat: 'pdf',
+  defaultFileType: 'md',
+  editorFontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif',
+  editorFontSize: 18,
+  editorTextColor: '#2c2c2c',
   apiKeys: {},
+  profile: {},
 };
 
 export const useLayoutStore = create<LayoutState>()(
@@ -291,6 +296,16 @@ export const useLayoutStore = create<LayoutState>()(
         replacer: dateReplacer,
         reviver: dateReviver,
       }),
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as Partial<LayoutState> | undefined;
+        const merged = persisted ? { ...currentState, ...persisted } : currentState;
+        if (merged.settings) {
+          const s = merged.settings as Record<string, unknown>;
+          if (!('defaultFileType' in s)) s.defaultFileType = 'md';
+          if (!('profile' in s)) s.profile = {};
+        }
+        return merged;
+      },
     }
   )
 );

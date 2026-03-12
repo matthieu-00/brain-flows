@@ -162,7 +162,7 @@ const AIChatWidget: React.FC<AIChatWidgetProps> = ({ widget }) => {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="p-3 border-b border-gray-200 bg-gray-50"
+            className="p-3 border-b border-gray-200 dark:border-neutral-600 bg-gray-50 dark:bg-neutral-800"
           >
             <div className="space-y-2">
               <Input
@@ -192,13 +192,13 @@ const AIChatWidget: React.FC<AIChatWidgetProps> = ({ widget }) => {
       {/* Chat Messages */}
       <div className="flex-1 overflow-y-auto p-3 space-y-3">
         {errorMessage && (
-          <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+          <div className="rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-3 py-2 text-xs text-red-700 dark:text-red-400">
             {errorMessage}
           </div>
         )}
 
         {messages.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-gray-500 dark:text-neutral-textMuted">
             <div className="text-4xl mb-2">🤖</div>
             <p className="text-sm">Start a conversation with AI</p>
             <p className="text-xs mt-1">
@@ -218,12 +218,12 @@ const AIChatWidget: React.FC<AIChatWidgetProps> = ({ widget }) => {
                   className={`max-w-[80%] px-3 py-2 rounded-lg text-sm ${
                     msg.role === 'user'
                       ? 'bg-blue-500 text-white'
-                      : 'bg-gray-200 text-gray-800'
+                      : 'bg-gray-200 dark:bg-neutral-800 text-gray-800 dark:text-neutral-100'
                   }`}
                 >
                   <div>{msg.content}</div>
                   <div className={`text-xs mt-1 ${
-                    msg.role === 'user' ? 'text-blue-100' : 'text-gray-500'
+                    msg.role === 'user' ? 'text-blue-100' : 'text-gray-500 dark:text-neutral-textMuted'
                   }`}>
                     {new Date(msg.timestamp).toLocaleTimeString()}
                   </div>
@@ -239,11 +239,11 @@ const AIChatWidget: React.FC<AIChatWidgetProps> = ({ widget }) => {
             animate={{ opacity: 1, y: 0 }}
             className="flex justify-start"
           >
-            <div className="bg-gray-200 px-3 py-2 rounded-lg text-sm">
+            <div className="bg-gray-200 dark:bg-neutral-800 px-3 py-2 rounded-lg text-sm">
               <div className="flex space-x-1">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-2 h-2 bg-gray-400 dark:bg-neutral-500 rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-gray-400 dark:bg-neutral-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                <div className="w-2 h-2 bg-gray-400 dark:bg-neutral-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
               </div>
             </div>
           </motion.div>

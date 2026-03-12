@@ -22,7 +22,7 @@ const DrawingCanvasWidget: React.FC<DrawingCanvasWidgetProps> = ({ widget }) => 
   const savedDrawing = widget.data?.drawing;
 
   return (
-    <div className="bg-white rounded-lg p-4">
+    <div className="bg-white dark:bg-neutral-surface rounded-lg p-4">
       <FlatDraw
         width={350}
         height={250}

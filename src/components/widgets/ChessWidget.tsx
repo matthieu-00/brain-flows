@@ -120,7 +120,7 @@ const ChessWidget: React.FC<ChessWidgetProps> = ({ widget }) => {
       {/* Game Content */}
       <div className="flex flex-col h-full">
         {/* Game Status */}
-        <div className="mb-4 p-3 bg-sage-100 rounded-lg">
+        <div className="mb-4 p-3 bg-sage-100 dark:bg-sage-400/20 rounded-lg">
           <p className="text-sm font-medium text-sage-900">
             {getGameStatus()}
           </p>
@@ -154,9 +154,9 @@ const ChessWidget: React.FC<ChessWidgetProps> = ({ widget }) => {
 
         {/* Move History */}
         {game.history().length > 0 && (
-          <div className="mt-4 p-3 bg-neutral-100 rounded-lg max-h-24 overflow-y-auto">
-            <p className="text-xs font-medium text-neutral-700 mb-1">Move History:</p>
-            <div className="text-xs text-neutral-600 space-x-2">
+          <div className="mt-4 p-3 bg-neutral-100 dark:bg-neutral-800 rounded-lg max-h-24 overflow-y-auto">
+            <p className="text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Move History:</p>
+            <div className="text-xs text-neutral-600 dark:text-neutral-textMuted space-x-2">
               {game.history().map((move, index) => (
                 <span key={index} className="inline-block">
                   {Math.floor(index / 2) + 1}.{index % 2 === 0 ? '' : '..'} {move}

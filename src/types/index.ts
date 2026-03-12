@@ -7,6 +7,8 @@ export interface User {
   avatar?: string;
 }
 
+export type ExportFormat = 'pdf' | 'docx' | 'txt' | 'md';
+
 export interface Document {
   id: string;
   title: string;
@@ -15,6 +17,7 @@ export interface Document {
   updatedAt: Date;
   wordCount: number;
   characterCount: number;
+  exportFormat?: ExportFormat;
 }
 
 export type WidgetType = 
@@ -58,15 +61,26 @@ export interface LayoutConfig {
   rightZonePreviousWidth?: number;
 }
 
+export interface UserProfile {
+  displayName?: string;
+  email?: string;
+  avatar?: string; // data URL or base64
+}
+
 export interface AppSettings {
   theme: 'light' | 'dark' | 'system';
   autoSaveInterval: number; // seconds
   distractionFreeMode: boolean;
-  exportFormat: 'pdf' | 'docx' | 'txt';
+  exportFormat: 'pdf' | 'docx' | 'txt' | 'md';
+  defaultFileType: 'pdf' | 'docx' | 'txt' | 'md';
+  editorFontFamily: string;
+  editorFontSize: number;
+  editorTextColor: string;
   apiKeys: {
     openai?: string;
     weather?: string;
   };
+  profile?: UserProfile;
 }
 
 export interface StickyNote {

@@ -80,7 +80,7 @@ const FidgetToolsWidget: React.FC<FidgetToolsWidgetProps> = ({ widget }) => {
               <div className="absolute top-1/2 right-0 transform -translate-y-1/2 w-6 h-6 bg-yellow-500 rounded-full"></div>
             </div>
           </motion.div>
-          <p className="text-sm text-gray-600 mt-4">Click to spin!</p>
+          <p className="text-sm text-gray-600 dark:text-neutral-textMuted mt-4">Click to spin!</p>
         </div>
       )}
 
@@ -97,10 +97,10 @@ const FidgetToolsWidget: React.FC<FidgetToolsWidgetProps> = ({ widget }) => {
           </motion.button>
           
           <div className="mt-4 space-y-2">
-            <div className="text-2xl font-bold text-gray-800">
+            <div className="text-2xl font-bold text-gray-800 dark:text-neutral-text">
               {clickCount}
             </div>
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600 dark:text-neutral-textMuted">
               clicks
             </div>
             <Button
@@ -137,7 +137,7 @@ const FidgetToolsWidget: React.FC<FidgetToolsWidgetProps> = ({ widget }) => {
           </div>
           
           <div className="text-center mt-4">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-neutral-textMuted">
               Popped: {poppedBubbles.size}/24 bubbles
             </p>
             {poppedBubbles.size === 24 && (

@@ -27,7 +27,7 @@ const SudokuWidget: React.FC<SudokuWidgetProps> = ({ widget }) => {
   const savedSolution = widget.data?.solution;
 
   return (
-    <div className="bg-white rounded-lg p-4">
+    <div className="bg-white dark:bg-neutral-surface rounded-lg p-4">
       <ReactSudoku
         onSave={handleSave}
         initialPuzzle={savedPuzzle}

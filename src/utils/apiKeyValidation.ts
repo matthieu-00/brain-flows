@@ -12,7 +12,7 @@ export const isValidWeatherKey = (key?: string): boolean => {
 };
 
 export const getOpenAIKeyError = (key?: string): string => {
-  if (!key?.trim()) return 'OpenAI API key is required.';
+  if (!key?.trim()) return ''; // Empty is allowed (key optional when not using AI Chat)
   if (!isValidOpenAIKey(key)) return 'OpenAI key should start with sk- and be at least 24 characters.';
   return '';
 };

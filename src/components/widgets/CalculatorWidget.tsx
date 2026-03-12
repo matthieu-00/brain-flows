@@ -187,14 +187,14 @@ const CalculatorWidget: React.FC<CalculatorWidgetProps> = ({ widget }) => {
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: 'auto', opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
-          className="bg-gray-50 rounded-lg p-3 max-h-32 overflow-y-auto"
+          className="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3 max-h-32 overflow-y-auto"
         >
           {history.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-2">No calculations yet</p>
+            <p className="text-sm text-gray-500 dark:text-neutral-400 text-center py-2">No calculations yet</p>
           ) : (
             <div className="space-y-1">
               {history.map((calculation, index) => (
-                <div key={index} className="text-xs font-mono text-gray-700">
+                <div key={index} className="text-xs font-mono text-gray-700 dark:text-neutral-textMuted">
                   {calculation}
                 </div>
               ))}

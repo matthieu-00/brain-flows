@@ -8,8 +8,9 @@ import './index.css';
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary
-      title="Application error"
-      description="The app hit an unexpected error. Reload the page to recover."
+      title="Oops! Something went sideways"
+      description="Our brains got a little tangled. A quick refresh usually sorts it out."
+      onReset={() => window.location.reload()}
     >
       <App />
     </ErrorBoundary>

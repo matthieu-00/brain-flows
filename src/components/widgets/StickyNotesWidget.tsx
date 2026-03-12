@@ -101,7 +101,7 @@ const StickyNotesWidget: React.FC<StickyNotesWidgetProps> = ({ widget }) => {
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="absolute top-full right-0 mt-2 p-2 bg-white border border-gray-300 rounded-lg shadow-lg z-20"
+                className="absolute top-full right-0 mt-2 p-2 bg-white dark:bg-neutral-surface border border-gray-300 dark:border-neutral-700 rounded-lg shadow-lg z-20"
               >
                 <div className="grid grid-cols-4 gap-1">
                   {colors.map(color => (
@@ -137,11 +137,11 @@ const StickyNotesWidget: React.FC<StickyNotesWidgetProps> = ({ widget }) => {
       {/* Notes Container */}
       <div 
         ref={containerRef}
-        className="relative min-h-64 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 overflow-hidden"
+        className="relative min-h-64 bg-gray-50 dark:bg-neutral-700 rounded-lg border-2 border-dashed border-gray-300 dark:border-neutral-700 overflow-hidden"
         style={{ height: '300px' }}
       >
         {notes.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-gray-500">
+          <div className="flex items-center justify-center h-full text-gray-500 dark:text-neutral-textMuted">
             <div className="text-center">
               <div className="text-4xl mb-2">📝</div>
               <p className="text-sm">No sticky notes yet</p>
@@ -164,7 +164,7 @@ const StickyNotesWidget: React.FC<StickyNotesWidgetProps> = ({ widget }) => {
       </div>
 
       {/* Notes Count */}
-      <div className="text-xs text-gray-500 text-center">
+      <div className="text-xs text-gray-500 dark:text-neutral-textMuted text-center">
         {notes.length} {notes.length === 1 ? 'note' : 'notes'}
       </div>
     </div>

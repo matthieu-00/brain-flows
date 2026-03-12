@@ -163,7 +163,7 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ widget }) => {
             />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-2xl font-bold text-neutral-900">
+            <span className="text-2xl font-bold text-neutral-900 dark:text-neutral-text">
               {formatTime(minutes, seconds)}
             </span>
           </div>
@@ -180,7 +180,7 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ widget }) => {
             >
               <Minus className="w-4 h-4" />
             </Button>
-            <span className="text-sm text-neutral-600 min-w-16 text-center">
+            <span className="text-sm text-neutral-600 dark:text-neutral-textMuted min-w-16 text-center">
               {Math.floor(totalSeconds / 60)}m
             </span>
             <Button

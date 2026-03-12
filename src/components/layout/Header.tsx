@@ -3,14 +3,15 @@ import { motion } from 'framer-motion';
 import { 
   Settings, 
   LogOut, 
-  Save, 
-  Download, 
+  SaveAll, 
+  ChevronDown,
   Maximize, 
   Minimize, 
   User,
   FileText,
   FilePlus,
 } from 'lucide-react';
+import { ExportFormat } from '../../types';
 import { useAuthStore } from '../../store/authStore';
 import { useDocumentStore } from '../../store/documentStore';
 import { useLayoutStore } from '../../store/layoutStore';
@@ -20,57 +21,84 @@ import { NewDocumentPrompt } from '../editor/NewDocumentPrompt';
 
 export const Header: React.FC = () => {
   const { user, logout } = useAuthStore();
-  const { saveDocument, exportDocument, createDocument, hasUnsavedChanges, currentDocument } = useDocumentStore();
-  const { distractionFreeMode, toggleDistractionFreeMode } = useLayoutStore();
+  const { saveDocument, exportDocument, createDocument, updateDocument, hasUnsavedChanges, currentDocument } = useDocumentStore();
+  const { distractionFreeMode, toggleDistractionFreeMode, settings } = useLayoutStore();
   const [showSettings, setShowSettings] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNewDocPrompt, setShowNewDocPrompt] = useState(false);
+  const [showSaveDropdown, setShowSaveDropdown] = useState(false);
+  const [showNewDocDropdown, setShowNewDocDropdown] = useState(false);
+  const [pendingNewDocFormat, setPendingNewDocFormat] = useState<ExportFormat | null>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const saveDropdownRef = useRef<HTMLDivElement>(null);
+  const newDocDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (showUserMenu && userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
         setShowUserMenu(false);
       }
+      if (showSaveDropdown && saveDropdownRef.current && !saveDropdownRef.current.contains(e.target as Node)) {
+        setShowSaveDropdown(false);
+      }
+      if (showNewDocDropdown && newDocDropdownRef.current && !newDocDropdownRef.current.contains(e.target as Node)) {
+        setShowNewDocDropdown(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showUserMenu]);
+  }, [showUserMenu, showSaveDropdown, showNewDocDropdown]);
 
-  const handleExport = (format: 'pdf' | 'docx' | 'txt') => {
-    exportDocument(format);
+  const docExportFormat = currentDocument?.exportFormat ?? settings.defaultFileType ?? settings.exportFormat;
+
+  const handleExport = (format?: ExportFormat) => {
+    exportDocument(format ?? docExportFormat);
+    setShowSaveDropdown(false);
+  };
+
+  const handleSetDocumentFormat = (format: ExportFormat) => {
+    if (currentDocument) {
+      updateDocument(currentDocument.id, { exportFormat: format });
+    }
+    setShowSaveDropdown(false);
   };
 
   const handleSave = () => {
     saveDocument();
   };
 
-  const handleNewDocument = () => {
-    const hasContent = currentDocument && (
-      currentDocument.content.replace(/<[^>]*>/g, '').trim().length > 0 ||
-      currentDocument.title !== 'Untitled Document'
-    );
+  const hasContent = currentDocument && (
+    currentDocument.content.replace(/<[^>]*>/g, '').trim().length > 0 ||
+    currentDocument.title !== 'Untitled Document'
+  );
+
+  const handleNewDocument = (format?: ExportFormat) => {
     if (hasContent && hasUnsavedChanges) {
+      setPendingNewDocFormat(format ?? null);
       setShowNewDocPrompt(true);
     } else {
-      createDocument();
+      createDocument(undefined, format);
     }
+    setShowNewDocDropdown(false);
   };
 
   const handleSaveAndNew = () => {
     saveDocument();
-    createDocument();
+    createDocument(undefined, pendingNewDocFormat ?? undefined);
+    setPendingNewDocFormat(null);
     setShowNewDocPrompt(false);
   };
 
   const handleExportAndNew = () => {
-    exportDocument('pdf');
-    createDocument();
+    exportDocument(docExportFormat);
+    createDocument(undefined, pendingNewDocFormat ?? undefined);
+    setPendingNewDocFormat(null);
     setShowNewDocPrompt(false);
   };
 
   const handleDiscardAndNew = () => {
-    createDocument();
+    createDocument(undefined, pendingNewDocFormat ?? undefined);
+    setPendingNewDocFormat(null);
     setShowNewDocPrompt(false);
   };
 
@@ -79,53 +107,125 @@ export const Header: React.FC = () => {
       <motion.header
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        className="bg-cream-50 border-b border-neutral-300 shadow-sm sticky top-0 z-40"
+        className="bg-cream-50 dark:bg-neutral-800 border-b border-neutral-300 dark:border-neutral-700 shadow-sm sticky top-0 z-40"
       >
         <div className="px-6 py-3 flex items-center justify-between">
           {/* Left side */}
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <FileText className="w-6 h-6 text-sage-900" />
-              <h1 className="text-xl font-bold text-neutral-900">brainsflow.io</h1>
+              <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-text">brainsflow.io</h1>
             </div>
           </div>
 
           {/* Right side */}
           <div className="flex items-center space-x-2">
-            {/* New Document */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleNewDocument}
-              className="hidden sm:flex"
-              title="New document"
-            >
-              <FilePlus className="w-4 h-4 mr-1" />
-              New
-            </Button>
+            {/* New Document Split Button */}
+            <div className="relative hidden sm:flex" ref={newDocDropdownRef}>
+              <div className="flex rounded-lg border border-neutral-300 dark:border-neutral-600 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => handleNewDocument()}
+                  className="px-3 py-1.5 flex items-center gap-1.5 text-sm font-medium bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700 text-neutral-900 dark:text-neutral-text border-r border-neutral-300 dark:border-neutral-600 transition-colors"
+                  title="New document"
+                >
+                  <FilePlus className="w-4 h-4" />
+                  New
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowNewDocDropdown((prev) => !prev)}
+                  className="px-1.5 py-1.5 flex items-center bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700 text-neutral-900 dark:text-neutral-text transition-colors"
+                  title="Format for new document"
+                >
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+              </div>
 
-            {/* Save Button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSave}
-              className="hidden sm:flex"
-            >
-              <Save className="w-4 h-4 mr-1" />
-              Save
-            </Button>
+              {showNewDocDropdown && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: -8 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  className="absolute right-0 mt-2 w-56 bg-white dark:bg-neutral-surface rounded-lg shadow-lg border border-gray-200 dark:border-neutral-700 py-1 z-50"
+                >
+                  <div className="px-3 py-2 text-xs font-medium text-neutral-500 dark:text-neutral-textMuted">
+                    Format for this document
+                  </div>
+                  {(['pdf', 'docx', 'txt', 'md'] as const).map((format) => (
+                    <button
+                      key={format}
+                      type="button"
+                      onClick={() => handleNewDocument(format)}
+                      className="w-full px-3 py-2 text-left text-sm text-neutral-900 dark:text-neutral-text hover:bg-sage-100 dark:hover:bg-neutral-700 transition-colors capitalize"
+                    >
+                      {format === 'md' ? 'Markdown' : format === 'txt' ? 'Plain text' : format === 'docx' ? 'Word document' : 'PDF'}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </div>
 
-            {/* Export Dropdown */}
-            <div className="relative">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleExport('pdf')}
-                className="hidden sm:flex"
-              >
-                <Download className="w-4 h-4 mr-1" />
-                Export
-              </Button>
+            {/* Save/Export Split Button */}
+            <div className="relative hidden sm:flex" ref={saveDropdownRef}>
+              <div className="flex rounded-lg border border-neutral-300 dark:border-neutral-600 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  className="px-3 py-1.5 flex items-center gap-1.5 text-sm font-medium bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700 text-neutral-900 dark:text-neutral-text border-r border-neutral-300 dark:border-neutral-600 transition-colors"
+                  title="Save"
+                >
+                  <SaveAll className="w-4 h-4" />
+                  Save
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowSaveDropdown((prev) => !prev)}
+                  className="px-1.5 py-1.5 flex items-center bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700 text-neutral-900 dark:text-neutral-text transition-colors"
+                  title="Export options"
+                >
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+              </div>
+
+              {showSaveDropdown && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: -8 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  className="absolute right-0 mt-2 w-56 bg-white dark:bg-neutral-surface rounded-lg shadow-lg border border-gray-200 dark:border-neutral-700 py-1 z-50"
+                >
+                  <div className="px-3 py-2 text-xs font-medium text-neutral-500 dark:text-neutral-textMuted">
+                    Export as
+                  </div>
+                  {(['pdf', 'docx', 'txt', 'md'] as const).map((format) => (
+                    <button
+                      key={format}
+                      type="button"
+                      onClick={() => handleExport(format)}
+                      className="w-full px-3 py-2 text-left text-sm text-neutral-900 dark:text-neutral-text hover:bg-sage-100 dark:hover:bg-neutral-700 transition-colors capitalize"
+                    >
+                      {format === 'md' ? 'Markdown' : format === 'txt' ? 'Plain text' : format === 'docx' ? 'Word document' : 'PDF'}
+                    </button>
+                  ))}
+                  <div className="my-1 border-t border-neutral-200 dark:border-neutral-700" />
+                  <div className="px-3 py-2 text-xs font-medium text-neutral-500 dark:text-neutral-textMuted">
+                    Format for this document
+                  </div>
+                  {(['pdf', 'docx', 'txt', 'md'] as const).map((format) => (
+                    <button
+                      key={format}
+                      type="button"
+                      onClick={() => handleSetDocumentFormat(format)}
+                      className={`w-full px-3 py-2 text-left text-sm hover:bg-sage-100 dark:hover:bg-neutral-700 transition-colors capitalize flex items-center justify-between ${
+                        docExportFormat === format
+                          ? 'text-sage-800 dark:text-sage-400 font-medium bg-sage-50 dark:bg-sage-900/30'
+                          : 'text-neutral-900 dark:text-neutral-text'
+                      }`}
+                    >
+                      {format === 'md' ? 'Markdown' : format === 'txt' ? 'Plain text' : format === 'docx' ? 'Word document' : 'PDF'}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
             </div>
 
             {/* Distraction Free Toggle */}
@@ -150,30 +250,32 @@ export const Header: React.FC = () => {
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 className="flex items-center space-x-2"
               >
-                {user?.avatar ? (
+                {(user?.avatar || settings.profile?.avatar) ? (
                   <img
-                    src={user.avatar}
-                    alt={user.name}
+                    src={(user?.avatar ?? settings.profile?.avatar) as string}
+                    alt={user?.name ?? settings.profile?.displayName ?? 'Profile'}
                     className="w-6 h-6 rounded-full"
                   />
                 ) : (
                   <User className="w-4 h-4" />
                 )}
-                <span className="hidden sm:inline text-sm">{user?.name}</span>
+                <span className="hidden sm:inline text-sm">
+                  {user?.name ?? settings.profile?.displayName ?? 'Profile'}
+                </span>
               </Button>
 
               {showUserMenu && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95, y: -10 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
-                  className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50"
+                  className="absolute right-0 mt-2 w-48 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-gray-200 dark:border-neutral-700 py-1 z-50"
                 >
-                  <div className="px-4 py-2 border-b border-neutral-300">
-                    <div className="text-sm font-medium text-neutral-900">
-                      {user?.name}
+                  <div className="px-4 py-2 border-b border-neutral-300 dark:border-neutral-700">
+                    <div className="text-sm font-medium text-neutral-900 dark:text-neutral-text">
+                      {user?.name ?? settings.profile?.displayName ?? 'Profile'}
                     </div>
-                    <div className="text-xs text-neutral-600">
-                      {user?.email}
+                    <div className="text-xs text-neutral-600 dark:text-neutral-textMuted">
+                      {user?.email ?? settings.profile?.email ?? ''}
                     </div>
                   </div>
                   
@@ -182,21 +284,23 @@ export const Header: React.FC = () => {
                       setShowSettings(true);
                       setShowUserMenu(false);
                     }}
-                    className="w-full px-4 py-2 text-left text-sm text-neutral-900 hover:bg-sage-100 flex items-center space-x-2"
+                    className="w-full px-4 py-2 text-left text-sm text-neutral-900 dark:text-neutral-text hover:bg-sage-100 dark:hover:bg-neutral-800 flex items-center space-x-2"
                   >
                     <Settings className="w-4 h-4" />
                     <span>Settings</span>
                   </button>
-                  <button
-                    onClick={() => {
-                      logout();
-                      setShowUserMenu(false);
-                    }}
-                    className="w-full px-4 py-2 text-left text-sm text-neutral-900 hover:bg-sage-100 flex items-center space-x-2"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    <span>Sign Out</span>
-                  </button>
+                  {user && (
+                    <button
+                      onClick={() => {
+                        logout();
+                        setShowUserMenu(false);
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-neutral-900 dark:text-neutral-text hover:bg-sage-100 dark:hover:bg-neutral-800 flex items-center space-x-2"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Sign Out</span>
+                    </button>
+                  )}
                 </motion.div>
               )}
             </div>
@@ -215,7 +319,10 @@ export const Header: React.FC = () => {
         onSaveAndNew={handleSaveAndNew}
         onExportAndNew={handleExportAndNew}
         onDiscardAndNew={handleDiscardAndNew}
-        onCancel={() => setShowNewDocPrompt(false)}
+        onCancel={() => {
+          setShowNewDocPrompt(false);
+          setPendingNewDocFormat(null);
+        }}
       />
     </>
   );

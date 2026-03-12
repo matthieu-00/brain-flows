@@ -67,7 +67,7 @@ const WidgetContainer: React.FC<WidgetContainerProps> = ({
         return <WeatherWidget widget={widget} />;
       default:
         return (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-gray-500 dark:text-neutral-400">
             <div className="text-4xl mb-2">❓</div>
             <p className="text-sm">Unknown widget type</p>
           </div>
@@ -85,15 +85,15 @@ const WidgetContainer: React.FC<WidgetContainerProps> = ({
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
-      className={`bg-white rounded-lg border border-neutral-300 shadow-sm overflow-hidden mb-4 ${className}`}
+      className={`bg-white dark:bg-neutral-surface rounded-lg border border-neutral-300 dark:border-neutral-700 shadow-sm overflow-hidden mb-4 ${className}`}
       style={{
         minHeight: widget.isCollapsed ? '60px' : '300px',
         height: widget.isCollapsed ? '60px' : 'auto',
       }}
     >
       {/* Widget Header */}
-      <div className="flex items-center justify-between px-4 py-3 bg-cream-50 border-b border-neutral-300">
-        <h3 className="text-sm font-semibold text-neutral-900">
+      <div className="flex items-center justify-between px-4 py-3 bg-cream-50 dark:bg-neutral-700 border-b border-neutral-300 dark:border-neutral-700">
+        <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-text">
           {widgetDisplayName}
         </h3>
         
@@ -102,7 +102,7 @@ const WidgetContainer: React.FC<WidgetContainerProps> = ({
             variant="ghost"
             size="sm"
             onClick={() => toggleWidgetCollapsed(widget.id)}
-            className="p-1.5 w-7 h-7 hover:bg-neutral-200"
+            className="p-1.5 w-7 h-7 hover:bg-neutral-200 dark:hover:bg-neutral-800"
             title={widget.isCollapsed ? 'Expand widget' : 'Collapse widget'}
           >
             {widget.isCollapsed ? (
@@ -116,7 +116,7 @@ const WidgetContainer: React.FC<WidgetContainerProps> = ({
             variant="ghost"
             size="sm"
             onClick={() => removeWidget(widget.id)}
-            className="p-1.5 w-7 h-7 text-red-600 hover:text-red-700 hover:bg-red-50"
+            className="p-1.5 w-7 h-7 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
             title="Remove widget"
           >
             <X className="w-3 h-3" />
@@ -136,19 +136,19 @@ const WidgetContainer: React.FC<WidgetContainerProps> = ({
           <Suspense fallback={
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sage-900"></div>
-              <span className="ml-3 text-sm text-neutral-600">Loading widget...</span>
+              <span className="ml-3 text-sm text-neutral-600 dark:text-neutral-400">Loading widget...</span>
             </div>
           }>
             <ErrorBoundary
               fallback={
-                <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-4 text-sm text-red-700 dark:text-red-400">
                   <p className="font-semibold">Widget failed to render</p>
                   <p className="mt-1">Try removing and adding this widget again.</p>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => removeWidget(widget.id)}
-                    className="mt-3 border-red-300 text-red-700 hover:bg-red-100"
+                    className="mt-3 border-red-300 dark:border-red-700 text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30"
                   >
                     Remove widget
                   </Button>

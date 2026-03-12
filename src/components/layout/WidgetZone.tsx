@@ -102,11 +102,11 @@ export const WidgetZone: React.FC<WidgetZoneProps> = ({ zone, className, panelGr
   const chevronSizeClass = '!w-7 !h-7 !min-w-7 !min-h-7';
   const chevronIconClass = 'w-3.5 h-3.5';
   const chevronButtonVisualClass = isCollapsed
-    ? 'border border-sage-200 shadow-sm !bg-sage-100 hover:!bg-sage-200'
-    : '!bg-transparent hover:!bg-sage-100';
+    ? 'border border-sage-200 dark:border-neutral-700 shadow-sm !bg-sage-100 dark:!bg-neutral-800 hover:!bg-sage-200 dark:hover:!bg-neutral-800'
+    : '!bg-transparent hover:!bg-sage-100 dark:hover:!bg-neutral-800';
 
   return (
-    <div className={`h-full bg-cream-100 border-neutral-300 relative group ${className}`}>
+    <div className={`h-full bg-cream-100 dark:bg-neutral-surface border-neutral-300 dark:border-neutral-700 relative group ${className}`}>
       {/* Chevron on panel border - collapse/expand */}
       <div
         className={`
@@ -141,12 +141,12 @@ export const WidgetZone: React.FC<WidgetZoneProps> = ({ zone, className, panelGr
               <div className="flex items-center justify-center h-full">
                 <button
                   onClick={() => openWidgetModal('add', zone)}
-                  className="text-center text-neutral-400 hover:text-sage-700 transition-colors cursor-pointer"
+                  className="text-center text-neutral-400 dark:text-neutral-textMuted hover:text-sage-700 dark:hover:text-sage-700 transition-colors cursor-pointer"
                 >
                   <div className="flex justify-center mb-3">
                     <EmptyStateIcon />
                   </div>
-                  <p className="text-sm">Click to add widgets.</p>
+                  <p className="text-sm text-neutral-600 dark:text-neutral-textMuted">Click to add widgets.</p>
                 </button>
               </div>
             ) : (

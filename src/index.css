@@ -4,9 +4,10 @@
 
 /* ProseMirror visibility - prose classes don't work without @tailwindcss/typography */
 .ProseMirror {
-  color: #2c2c2c;
-  caret-color: #2c2c2c;
-  font-size: 1.125rem;
+  color: var(--editor-text-color, #2c2c2c);
+  caret-color: var(--editor-text-color, #2c2c2c);
+  font-family: var(--editor-font-family, Inter, ui-sans-serif, system-ui, sans-serif);
+  font-size: var(--editor-font-size, 18px);
   line-height: 1.75;
   outline: none;
   min-height: 1.5em;
@@ -26,34 +27,55 @@
   min-height: 1.5em;
 }
 
-/* Document-style page break */
+/* Document-style page break
+   In the editor: a visual marker only. Styling (line + label) shows only when content
+   above exceeds one page height (.page-break-visible). Actual page boundaries apply
+   when printing or exporting to PDF. */
 .page-break {
+  display: block;
+  height: 0.5rem;
+  margin: 0.75rem 0;
+  border: none;
+  position: relative;
+  transition: height 0.15s ease, margin 0.15s ease;
+}
+
+/* Visible state: show line + label when content above has reached page limit */
+.page-break.page-break-visible {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 2rem;
-  margin: 1.5rem 0;
-  border: none;
-  position: relative;
+  height: 3rem;
+  margin: 2.5rem 0;
 }
 
-.page-break::before {
+.page-break.page-break-visible::before {
   content: '';
   position: absolute;
   left: 0;
   right: 0;
   top: 50%;
   height: 0;
-  border-top: 2px dashed theme('colors.neutral.300');
+  border-top: 1px dotted theme('colors.neutral.300');
 }
 
-.page-break::after {
-  content: 'Page break';
+.page-break:not(.page-break-visible)::before {
+  display: none;
+}
+
+.page-break.page-break-visible::after {
+  content: '— New page —';
   position: relative;
-  padding: 0 0.75rem;
-  font-size: 0.75rem;
+  padding: 0 1rem;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
   color: theme('colors.neutral.400');
-  background: white;
+  background: inherit;
+}
+
+.page-break:not(.page-break-visible)::after {
+  display: none;
 }
 
 @media print {
@@ -75,4 +97,28 @@
   padding: 1.5rem;
   background-color: white;
   box-shadow: 0 1px 3px theme('colors.neutral.200');
+}
+
+.dark .document-pages {
+  background-color: theme('colors.neutral.surface');
+  box-shadow: 0 1px 3px theme('colors.neutral.950');
+}
+
+.dark .page-break::before {
+  border-color: theme('colors.neutral.700');
+}
+
+.dark .page-break::after {
+  color: theme('colors.neutral.textMuted');
+  background: inherit;
+}
+
+/* Dark mode: ensure select elements and their options are readable */
+.dark select {
+  color: theme('colors.neutral.text');
+}
+
+.dark select option {
+  background-color: theme('colors.neutral.surface');
+  color: theme('colors.neutral.text');
 }

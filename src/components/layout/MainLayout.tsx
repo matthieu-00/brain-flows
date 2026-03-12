@@ -14,7 +14,7 @@ export const MainLayout: React.FC = () => {
 
   if (distractionFreeMode) {
     return (
-      <div className="min-h-screen bg-cream-50 flex items-center justify-center p-8">
+      <div className="min-h-screen bg-cream-50 dark:bg-neutral-950 flex items-center justify-center p-8">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -27,7 +27,7 @@ export const MainLayout: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-cream-100">
+    <div className="min-h-screen bg-cream-100 dark:bg-neutral-950">
       <PanelGroup direction="vertical" className="min-h-screen" ref={verticalGroupRef}>
         {/* Top Zone */}
         <Panel
@@ -43,7 +43,7 @@ export const MainLayout: React.FC = () => {
           <WidgetZone zone="top" panelGroupRef={verticalGroupRef} />
         </Panel>
 
-        <PanelResizeHandle className="h-1 bg-neutral-300 hover:bg-sage-700 transition-colors" />
+        <PanelResizeHandle className="h-1 bg-neutral-300 dark:bg-neutral-700 hover:bg-sage-700 transition-colors" />
 
         {/* Main Content Area */}
         <Panel defaultSize={50} minSize={20}>
@@ -62,7 +62,7 @@ export const MainLayout: React.FC = () => {
               <WidgetZone zone="left" panelGroupRef={horizontalGroupRef} />
             </Panel>
 
-            <PanelResizeHandle className="w-1 bg-neutral-300 hover:bg-sage-700 transition-colors" />
+            <PanelResizeHandle className="w-1 bg-neutral-300 dark:bg-neutral-700 hover:bg-sage-700 transition-colors" />
 
             {/* Central Editor */}
             <Panel defaultSize={50} minSize={30}>
@@ -71,7 +71,7 @@ export const MainLayout: React.FC = () => {
               </div>
             </Panel>
 
-            <PanelResizeHandle className="w-1 bg-neutral-300 hover:bg-sage-700 transition-colors" />
+            <PanelResizeHandle className="w-1 bg-neutral-300 dark:bg-neutral-700 hover:bg-sage-700 transition-colors" />
 
             {/* Right Zone */}
             <Panel
@@ -89,7 +89,7 @@ export const MainLayout: React.FC = () => {
           </PanelGroup>
         </Panel>
 
-        <PanelResizeHandle className="h-1 bg-neutral-300 hover:bg-sage-700 transition-colors" />
+        <PanelResizeHandle className="h-1 bg-neutral-300 dark:bg-neutral-700 hover:bg-sage-700 transition-colors" />
 
         {/* Bottom Zone */}
         <Panel

@@ -1,8 +1,10 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { Document } from '../types';
+import { Document, ExportFormat } from '../types';
 import { dateReplacer, dateReviver } from '../utils/persistDates';
 import { exportToPdf } from '../utils/exportPdf';
+import { htmlToMarkdown } from '../utils/exportMarkdown';
+import { htmlToDocxBlob } from '../utils/exportDocx';
 
 interface DocumentState {
   currentDocument: Document | null;
@@ -10,13 +12,13 @@ interface DocumentState {
   isAutoSaveEnabled: boolean;
   lastSaved: Date | null;
   hasUnsavedChanges: boolean;
-  createDocument: (title?: string) => Document;
+  createDocument: (title?: string, exportFormat?: ExportFormat) => Document;
   updateDocument: (id: string, updates: Partial<Document>) => void;
   deleteDocument: (id: string) => void;
   loadDocument: (id: string) => void;
   saveDocument: () => void;
   autoSave: () => void;
-  exportDocument: (format: 'pdf' | 'docx' | 'txt') => void;
+  exportDocument: (format: ExportFormat) => void;
 }
 
 export const useDocumentStore = create<DocumentState>()(
@@ -28,7 +30,7 @@ export const useDocumentStore = create<DocumentState>()(
       lastSaved: null,
       hasUnsavedChanges: false,
 
-      createDocument: (title = 'Untitled Document') => {
+      createDocument: (title = 'Untitled Document', exportFormat?: ExportFormat) => {
         const newDoc: Document = {
           id: Date.now().toString(),
           title,
@@ -37,6 +39,7 @@ export const useDocumentStore = create<DocumentState>()(
           updatedAt: new Date(),
           wordCount: 0,
           characterCount: 0,
+          ...(exportFormat && { exportFormat }),
         };
 
         set(state => ({
@@ -67,11 +70,14 @@ export const useDocumentStore = create<DocumentState>()(
       },
 
       deleteDocument: (id: string) => {
+        const { documents, currentDocument } = get();
+        const remaining = documents.filter(doc => doc.id !== id);
+        const isDeletingCurrent = currentDocument?.id === id;
+        const nextDoc = isDeletingCurrent && remaining.length > 0 ? remaining[0] : null;
+
         set(state => ({
-          documents: state.documents.filter(doc => doc.id !== id),
-          currentDocument: state.currentDocument?.id === id 
-            ? null 
-            : state.currentDocument,
+          documents: remaining,
+          currentDocument: isDeletingCurrent ? nextDoc : state.currentDocument,
         }));
       },
 
@@ -95,7 +101,7 @@ export const useDocumentStore = create<DocumentState>()(
         }
       },
 
-      exportDocument: (format: 'pdf' | 'docx' | 'txt') => {
+      exportDocument: (format: ExportFormat) => {
         const { currentDocument } = get();
         if (!currentDocument) return;
 
@@ -106,12 +112,26 @@ export const useDocumentStore = create<DocumentState>()(
           return;
         }
 
-        // Plain text export
-        const content = format === 'txt'
-          ? new DOMParser().parseFromString(currentDocument.content, 'text/html').body.textContent ?? ''
-          : currentDocument.content;
+        if (format === 'docx') {
+          htmlToDocxBlob(currentDocument.content, title).then((blob) => {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${title}.docx`;
+            link.click();
+            URL.revokeObjectURL(url);
+          });
+          return;
+        }
 
-        const blob = new Blob([content], { type: 'text/plain' });
+        // Markdown or plain text export
+        const content =
+          format === 'md'
+            ? htmlToMarkdown(currentDocument.content)
+            : new DOMParser().parseFromString(currentDocument.content, 'text/html').body.textContent ?? '';
+
+        const mimeType = format === 'md' ? 'text/markdown' : 'text/plain';
+        const blob = new Blob([content], { type: mimeType });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
