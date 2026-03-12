@@ -34,6 +34,18 @@ export type WidgetType =
 
 export type WidgetZone = 'top' | 'bottom' | 'left' | 'right';
 
+export type WidgetFitMode = 'contain' | 'fill';
+export type WidgetOverflowBehavior = 'scroll' | 'hidden' | 'visible';
+
+export interface WidgetSizingSpec {
+  fitMode: WidgetFitMode;
+  minWidth?: number;
+  minHeight?: number;
+  maxHeight?: number;
+  preferredAspectRatio?: number;
+  overflowBehavior: WidgetOverflowBehavior;
+}
+
 export interface Widget {
   id: string;
   type: WidgetType;

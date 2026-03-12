@@ -1,7 +1,7 @@
 // Attribution: Based on Sticky-Notes-React
 // Repository: https://github.com/divanov11/Sticky-Notes-React
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Plus, X, Palette } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Widget } from '../../types';
@@ -31,11 +31,29 @@ const colors = [
   '#fce7f3', // pink
 ];
 
+const NOTE_SIZE = 128;
+
 const StickyNotesWidget: React.FC<StickyNotesWidgetProps> = ({ widget }) => {
   const { updateWidget } = useLayoutStore();
   const [selectedColor, setSelectedColor] = useState(colors[0]);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [containerSize, setContainerSize] = useState({ width: 300, height: 225 });
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerSize({
+          width: entry.contentRect.width,
+          height: entry.contentRect.height,
+        });
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   const notes: StickyNote[] = widget.data?.notes || [];
 
@@ -45,8 +63,8 @@ const StickyNotesWidget: React.FC<StickyNotesWidgetProps> = ({ widget }) => {
       content: 'New note...',
       color: selectedColor,
       position: { 
-        x: Math.random() * 200, 
-        y: Math.random() * 150 
+        x: Math.random() * Math.max(0, containerSize.width - NOTE_SIZE), 
+        y: Math.random() * Math.max(0, containerSize.height - NOTE_SIZE),
       },
       createdAt: new Date(),
     };
@@ -137,8 +155,7 @@ const StickyNotesWidget: React.FC<StickyNotesWidgetProps> = ({ widget }) => {
       {/* Notes Container */}
       <div 
         ref={containerRef}
-        className="relative min-h-64 bg-gray-50 dark:bg-neutral-700 rounded-lg border-2 border-dashed border-gray-300 dark:border-neutral-700 overflow-hidden"
-        style={{ height: '300px' }}
+        className="relative aspect-[4/3] bg-gray-50 dark:bg-neutral-700 rounded-lg border-2 border-dashed border-gray-300 dark:border-neutral-700 overflow-hidden"
       >
         {notes.length === 0 ? (
           <div className="flex items-center justify-center h-full text-gray-500 dark:text-neutral-textMuted">
@@ -157,6 +174,7 @@ const StickyNotesWidget: React.FC<StickyNotesWidgetProps> = ({ widget }) => {
                 onUpdate={(updates) => updateNote(note.id, updates)}
                 onDelete={() => deleteNote(note.id)}
                 onDrag={(position) => handleNoteDrag(note.id, position)}
+                containerBounds={containerSize}
               />
             ))}
           </AnimatePresence>
@@ -176,6 +194,7 @@ interface StickyNoteComponentProps {
   onUpdate: (updates: Partial<StickyNote>) => void;
   onDelete: () => void;
   onDrag: (position: { x: number; y: number }) => void;
+  containerBounds: { width: number; height: number };
 }
 
 const StickyNoteComponent: React.FC<StickyNoteComponentProps> = ({
@@ -183,6 +202,7 @@ const StickyNoteComponent: React.FC<StickyNoteComponentProps> = ({
   onUpdate,
   onDelete,
   onDrag,
+  containerBounds,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -202,12 +222,12 @@ const StickyNoteComponent: React.FC<StickyNoteComponentProps> = ({
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
       const newPosition = {
-        x: Math.max(0, Math.min(250, e.clientX - dragStartRef.current.x)),
-        y: Math.max(0, Math.min(200, e.clientY - dragStartRef.current.y)),
+        x: Math.max(0, Math.min(containerBounds.width - NOTE_SIZE, e.clientX - dragStartRef.current.x)),
+        y: Math.max(0, Math.min(containerBounds.height - NOTE_SIZE, e.clientY - dragStartRef.current.y)),
       };
       onDrag(newPosition);
     },
-    [onDrag]
+    [onDrag, containerBounds]
   );
 
   const handleMouseUp = useCallback(() => {

@@ -1,7 +1,7 @@
 // Chess Widget - Powered by react-chessboard and chess.js
 // Original libraries: https://github.com/Clariity/react-chessboard and https://github.com/jhlywa/chess.js
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Chessboard } from 'react-chessboard';
 import { Chess } from 'chess.js';
 import { useLayoutStore } from '../../store/layoutStore';
@@ -24,7 +24,22 @@ interface ChessGameData {
 const ChessWidget: React.FC<ChessWidgetProps> = ({ widget }) => {
   const { updateWidget } = useLayoutStore();
   
-  // Initialize chess game
+  const boardContainerRef = useRef<HTMLDivElement>(null);
+  const [boardSize, setBoardSize] = useState(280);
+
+  useEffect(() => {
+    const el = boardContainerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const w = entry.contentRect.width;
+        setBoardSize(Math.max(150, w));
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   const [game, setGame] = useState(() => new Chess());
   const [gamePosition, setGamePosition] = useState(game.fen());
   const [invalidMoveMessage, setInvalidMoveMessage] = useState('');
@@ -136,20 +151,18 @@ const ChessWidget: React.FC<ChessWidgetProps> = ({ widget }) => {
 
 
         {/* Chess Board */}
-        <div className="flex-1 flex items-center justify-center">
-          <div className="w-full max-w-md aspect-square">
-            <Chessboard
-              position={gamePosition}
-              onPieceDrop={onDrop}
-              boardWidth={Math.min(300, window.innerWidth - 100)}
-              customBoardStyle={{
-                borderRadius: '8px',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-              }}
-              customDarkSquareStyle={{ backgroundColor: '#4A7C59' }}
-              customLightSquareStyle={{ backgroundColor: '#E8F5E8' }}
-            />
-          </div>
+        <div ref={boardContainerRef} className="flex-1 flex items-center justify-center">
+          <Chessboard
+            position={gamePosition}
+            onPieceDrop={onDrop}
+            boardWidth={boardSize}
+            customBoardStyle={{
+              borderRadius: '8px',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+            }}
+            customDarkSquareStyle={{ backgroundColor: '#4A7C59' }}
+            customLightSquareStyle={{ backgroundColor: '#E8F5E8' }}
+          />
         </div>
 
         {/* Move History */}

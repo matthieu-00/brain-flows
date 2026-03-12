@@ -60,7 +60,8 @@ const ReactSudoku: React.FC<SudokuProps> = ({
     if (onSave) {
       onSave(puzzle, solution);
     }
-  }, [puzzle, solution, onSave]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- onSave intentionally excluded to avoid infinite loop when parent updates widget state
+  }, [puzzle, solution]);
 
   const isInitialCell = (row: number, col: number) => {
     return initialPuzzle[row][col] !== 0;
@@ -166,14 +167,14 @@ const ReactSudoku: React.FC<SudokuProps> = ({
       </div>
 
       {/* Sudoku Grid */}
-      <div className="inline-block border-2 border-gray-800 rounded-lg overflow-hidden mb-4">
+      <div className="w-full max-w-xs mx-auto border-2 border-gray-800 rounded-lg overflow-hidden mb-4">
         <div className="grid grid-cols-9 gap-0">
           {puzzle.map((row, rowIndex) =>
             row.map((cell, colIndex) => (
               <button
                 key={`${rowIndex}-${colIndex}`}
                 onClick={() => handleCellClick(rowIndex, colIndex)}
-                className={`w-8 h-8 flex items-center justify-center text-sm border transition-colors hover:bg-blue-100 ${getCellColor(rowIndex, colIndex)} ${
+                className={`aspect-square flex items-center justify-center text-xs sm:text-sm border transition-colors hover:bg-blue-100 ${getCellColor(rowIndex, colIndex)} ${
                   colIndex === 2 || colIndex === 5 ? 'border-r-2 border-r-gray-800' : ''
                 } ${
                   rowIndex === 2 || rowIndex === 5 ? 'border-b-2 border-b-gray-800' : ''
@@ -188,13 +189,13 @@ const ReactSudoku: React.FC<SudokuProps> = ({
       </div>
 
       {/* Number Input */}
-      <div className="grid grid-cols-5 gap-2">
+      <div className="max-w-xs mx-auto grid grid-cols-5 gap-1.5">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map((number) => (
           <button
             key={number}
             onClick={() => handleNumberInput(number)}
             disabled={!selectedCell || isInitialCell(selectedCell[0], selectedCell[1])}
-            className="px-3 py-2 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-2 py-1.5 text-xs sm:text-sm bg-white border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {number === 0 ? '✕' : number}
           </button>

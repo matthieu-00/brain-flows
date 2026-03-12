@@ -32,6 +32,7 @@ export const MainLayout: React.FC = () => {
         {/* Top Zone */}
         <Panel
           id="top-panel"
+          className="relative z-20"
           size={layoutConfig.topZoneHeight}
           minSize={3}
           collapsedSize={3}
@@ -51,6 +52,7 @@ export const MainLayout: React.FC = () => {
             {/* Left Zone */}
             <Panel
               id="left-panel"
+              className="relative z-20"
               size={layoutConfig.leftZoneWidth}
               minSize={3}
               collapsedSize={3}
@@ -65,7 +67,7 @@ export const MainLayout: React.FC = () => {
             <PanelResizeHandle className="w-1 bg-neutral-300 dark:bg-neutral-700 hover:bg-sage-700 transition-colors" />
 
             {/* Central Editor */}
-            <Panel defaultSize={50} minSize={30}>
+            <Panel defaultSize={50} minSize={25}>
               <div className="h-full flex flex-col min-h-0 p-4">
                 <RichTextEditor className="flex-1 min-h-0 w-full shadow-lg" />
               </div>
@@ -76,6 +78,7 @@ export const MainLayout: React.FC = () => {
             {/* Right Zone */}
             <Panel
               id="right-panel"
+              className="relative z-20"
               size={layoutConfig.rightZoneWidth}
               minSize={3}
               collapsedSize={3}
@@ -94,6 +97,7 @@ export const MainLayout: React.FC = () => {
         {/* Bottom Zone */}
         <Panel
           id="bottom-panel"
+          className="relative z-20"
           size={layoutConfig.bottomZoneHeight}
           minSize={3}
           collapsedSize={3}

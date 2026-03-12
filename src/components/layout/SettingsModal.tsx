@@ -305,24 +305,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
           </div>
         </CollapsibleSection>
 
-        {/* Text Appearance */}
-        <CollapsibleSection title="Text appearance" defaultOpen={true}>
+        {/* Text Editor Settings */}
+        <CollapsibleSection title="Text editor settings" defaultOpen={true}>
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-neutral-900 dark:text-neutral-text mb-2">Theme</label>
-              <select
-                value={settings.theme}
-                onChange={(e) =>
-                  updateSettings({ theme: e.target.value as AppSettings['theme'] })
-                }
-                className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-sage-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-text"
-              >
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-                <option value="system">System</option>
-              </select>
-            </div>
-
             <div>
               <label className="block text-sm font-medium text-neutral-900 dark:text-neutral-text mb-2">
                 Editor font
@@ -407,6 +392,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
             <div>
               <label className="block text-sm font-medium text-neutral-900 dark:text-neutral-text mb-2">
+                Default export format
+              </label>
+              <select
+                value={settings.exportFormat}
+                onChange={(e) =>
+                  updateSettings({
+                    exportFormat: e.target.value as AppSettings['exportFormat'],
+                  })
+                }
+                className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-sage-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-text"
+              >
+                <option value="pdf">PDF</option>
+                <option value="docx">Word Document</option>
+                <option value="md">Markdown</option>
+                <option value="txt">Plain Text</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-neutral-900 dark:text-neutral-text mb-2">
                 Auto-save interval (seconds)
               </label>
               <input
@@ -455,7 +460,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                       className="flex items-start space-x-3 cursor-pointer"
                       onClick={() => toggleWidget(widget.type)}
                     >
-                      <div className="text-2xl">{widget.icon}</div>
+                      <div className="text-neutral-500 dark:text-neutral-textMuted">
+                          {React.createElement(widget.icon, { className: 'w-6 h-6' })}
+                        </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                           <h4 className="text-sm font-medium text-neutral-900 dark:text-neutral-text">{widget.name}</h4>
@@ -553,29 +560,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   </div>
                 );
               })}
-          </div>
-        </CollapsibleSection>
-
-        {/* Export Settings */}
-        <CollapsibleSection title="Export" defaultOpen={true}>
-          <div>
-            <label className="block text-sm font-medium text-neutral-900 dark:text-neutral-text mb-2">
-              Default export format
-            </label>
-            <select
-              value={settings.exportFormat}
-              onChange={(e) =>
-                updateSettings({
-                  exportFormat: e.target.value as AppSettings['exportFormat'],
-                })
-              }
-              className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-sage-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-text"
-            >
-              <option value="pdf">PDF</option>
-              <option value="docx">Word Document</option>
-              <option value="md">Markdown</option>
-              <option value="txt">Plain Text</option>
-            </select>
           </div>
         </CollapsibleSection>
 

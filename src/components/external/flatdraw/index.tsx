@@ -142,9 +142,11 @@ const FlatDraw: React.FC<FlatDrawProps> = ({
     if (!canvas) return { x: 0, y: 0 };
 
     const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
     return {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY,
     };
   };
 
@@ -327,6 +329,7 @@ const FlatDraw: React.FC<FlatDrawProps> = ({
         width={width}
         height={height}
         className="border border-gray-300 rounded-lg cursor-crosshair bg-white"
+        style={{ maxWidth: '100%', height: 'auto' }}
         onMouseDown={startDrawing}
         onMouseMove={draw}
         onMouseUp={stopDrawing}

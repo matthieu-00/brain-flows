@@ -129,7 +129,7 @@ const AIChatWidget: React.FC<AIChatWidgetProps> = ({ widget }) => {
   };
 
   return (
-    <div className="flex flex-col h-80">
+    <div className="flex flex-col min-h-[16rem]">
       {/* Controls */}
       <div className="flex items-center justify-between mb-3">
         <div className="w-2 h-2 bg-green-400 rounded-full"></div>

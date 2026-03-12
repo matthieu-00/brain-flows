@@ -8,8 +8,11 @@ import {
   Maximize, 
   Minimize, 
   User,
-  FileText,
+  Signature,
   FilePlus,
+  Sun,
+  Moon,
+  Monitor,
 } from 'lucide-react';
 import { ExportFormat } from '../../types';
 import { useAuthStore } from '../../store/authStore';
@@ -22,7 +25,7 @@ import { NewDocumentPrompt } from '../editor/NewDocumentPrompt';
 export const Header: React.FC = () => {
   const { user, logout } = useAuthStore();
   const { saveDocument, exportDocument, createDocument, updateDocument, hasUnsavedChanges, currentDocument } = useDocumentStore();
-  const { distractionFreeMode, toggleDistractionFreeMode, settings } = useLayoutStore();
+  const { distractionFreeMode, toggleDistractionFreeMode, settings, updateSettings } = useLayoutStore();
   const [showSettings, setShowSettings] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNewDocPrompt, setShowNewDocPrompt] = useState(false);
@@ -113,7 +116,7 @@ export const Header: React.FC = () => {
           {/* Left side */}
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
-              <FileText className="w-6 h-6 text-sage-900" />
+              <Signature className="w-6 h-6 text-sage-900 dark:text-sage-400" />
               <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-text">brainsflow.io</h1>
             </div>
           </div>
@@ -268,7 +271,7 @@ export const Header: React.FC = () => {
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95, y: -10 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
-                  className="absolute right-0 mt-2 w-48 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-gray-200 dark:border-neutral-700 py-1 z-50"
+                  className="absolute right-0 mt-2 w-56 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-gray-200 dark:border-neutral-700 py-1 z-50"
                 >
                   <div className="px-4 py-2 border-b border-neutral-300 dark:border-neutral-700">
                     <div className="text-sm font-medium text-neutral-900 dark:text-neutral-text">
@@ -276,6 +279,30 @@ export const Header: React.FC = () => {
                     </div>
                     <div className="text-xs text-neutral-600 dark:text-neutral-textMuted">
                       {user?.email ?? settings.profile?.email ?? ''}
+                    </div>
+                  </div>
+
+                  <div className="px-4 py-2 border-b border-neutral-300 dark:border-neutral-700">
+                    <div className="text-xs font-medium text-neutral-500 dark:text-neutral-textMuted mb-2">Theme</div>
+                    <div className="flex rounded-lg border border-neutral-300 dark:border-neutral-600 overflow-hidden">
+                      {(['light', 'dark', 'system'] as const).map((theme) => (
+                        <button
+                          key={theme}
+                          type="button"
+                          onClick={() => updateSettings({ theme })}
+                          className={`flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-medium transition-colors ${
+                            settings.theme === theme
+                              ? 'bg-sage-100 dark:bg-sage-900/30 text-sage-800 dark:text-sage-400'
+                              : 'bg-white dark:bg-neutral-800 text-neutral-600 dark:text-neutral-textMuted hover:bg-neutral-50 dark:hover:bg-neutral-700'
+                          }`}
+                          title={theme === 'system' ? 'Use system preference' : theme === 'dark' ? 'Dark mode' : 'Light mode'}
+                        >
+                          {theme === 'light' && <Sun className="w-3.5 h-3.5" />}
+                          {theme === 'dark' && <Moon className="w-3.5 h-3.5" />}
+                          {theme === 'system' && <Monitor className="w-3.5 h-3.5" />}
+                          <span className="capitalize">{theme}</span>
+                        </button>
+                      ))}
                     </div>
                   </div>
                   

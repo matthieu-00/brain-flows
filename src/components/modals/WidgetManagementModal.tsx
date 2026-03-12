@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { StopCircle, Check, X } from 'lucide-react';
+import { StopCircle, Check, X, Package } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -175,7 +175,9 @@ export const WidgetManagementModal: React.FC = () => {
                         className={`flex items-start space-x-3 ${!alreadyExists ? 'cursor-pointer' : 'cursor-not-allowed'}`}
                         onClick={() => !alreadyExists && handleWidgetSelect(widget.type)}
                       >
-                        <div className="text-2xl">{widget.icon}</div>
+                        <div className="text-neutral-500 dark:text-neutral-textMuted">
+                            {React.createElement(widget.icon, { className: 'w-6 h-6' })}
+                          </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
                             <h4 className="text-sm font-medium text-neutral-900 dark:text-neutral-text">
@@ -319,7 +321,9 @@ export const WidgetManagementModal: React.FC = () => {
                         whileTap={{ scale: 0.98 }}
                       >
                         <div className="flex items-start space-x-3">
-                          <div className="text-2xl">{widgetInfo?.icon || '📦'}</div>
+                          <div className="text-neutral-500 dark:text-neutral-textMuted">
+                                {widgetInfo?.icon ? React.createElement(widgetInfo.icon, { className: 'w-6 h-6' }) : React.createElement(Package, { className: 'w-6 h-6' })}
+                              </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
                               <h4 className="font-medium text-neutral-900 dark:text-neutral-text text-sm">

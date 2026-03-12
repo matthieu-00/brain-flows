@@ -158,7 +158,7 @@ export const useLayoutStore = create<LayoutState>()(
         const panelGroup = panelGroupRef.current;
         if (!panelGroup) return;
         const collapsedPct = 3;
-        const minExpandedSize = zone === 'left' || zone === 'right' ? 18 : 12;
+        const minExpandedSize = zone === 'left' || zone === 'right' ? 20 : 14;
 
         // Get current layout and collapsed state
         const currentLayout = panelGroup.getLayout();
@@ -234,14 +234,14 @@ export const useLayoutStore = create<LayoutState>()(
             const centerSize = currentLayout[1] || 50;
             const rightSize = currentLayout[2] || layoutConfig.rightZoneWidth;
             const spaceToTake = restoreSize - collapsedPct;
-            newLayout = [restoreSize, Math.max(30, centerSize - spaceToTake), rightSize];
+            newLayout = [restoreSize, Math.max(25, centerSize - spaceToTake), rightSize];
           } else {
             // right
             // Horizontal group: [left, center, right]
             const leftSize = currentLayout[0] || layoutConfig.leftZoneWidth;
             const centerSize = currentLayout[1] || 50;
             const spaceToTake = restoreSize - collapsedPct;
-            newLayout = [leftSize, Math.max(30, centerSize - spaceToTake), restoreSize];
+            newLayout = [leftSize, Math.max(25, centerSize - spaceToTake), restoreSize];
           }
         }
 

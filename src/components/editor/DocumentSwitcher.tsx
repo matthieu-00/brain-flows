@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 import { ChevronDown, FileText, Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -18,9 +19,12 @@ export const DocumentSwitcher: React.FC = () => {
   } = useDocumentStore();
 
   const [isOpen, setIsOpen] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; right: number } | null>(null);
   const [pendingDocumentId, setPendingDocumentId] = useState<string | null>(null);
   const [showUnsavedPrompt, setShowUnsavedPrompt] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const sortedDocuments = useMemo(
     () =>
@@ -36,12 +40,24 @@ export const DocumentSwitcher: React.FC = () => {
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (isOpen && containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      const inContainer = containerRef.current?.contains(target);
+      const inDropdown = dropdownRef.current?.contains(target);
+      if (isOpen && !inContainer && !inDropdown) {
         setIsOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setDropdownPosition({ top: rect.bottom + 8, right: window.innerWidth - rect.right });
+    } else {
+      setDropdownPosition(null);
+    }
   }, [isOpen]);
 
   const hasCurrentContent =
@@ -93,24 +109,38 @@ export const DocumentSwitcher: React.FC = () => {
     return null;
   }
 
+  const dropdownStyle = dropdownPosition
+    ? {
+        position: 'fixed' as const,
+        top: dropdownPosition.top,
+        right: dropdownPosition.right,
+        width: 288,
+        zIndex: 9999,
+      }
+    : undefined;
+
   return (
     <div className="relative" ref={containerRef}>
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        onClick={() => setIsOpen((prev) => !prev)}
-        title="Switch document"
-        className="px-2"
-      >
-        <ChevronDown className="w-4 h-4" />
-      </Button>
+      <div ref={triggerRef} className="inline-flex">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => setIsOpen((prev) => !prev)}
+          title="Switch document"
+          className="px-2"
+        >
+          <ChevronDown className="w-4 h-4" />
+        </Button>
+      </div>
 
-      {isOpen && (
+      {isOpen && dropdownStyle && createPortal(
         <motion.div
+          ref={dropdownRef}
           initial={{ opacity: 0, scale: 0.95, y: -8 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          className="absolute right-0 mt-2 w-72 bg-white dark:bg-neutral-surface rounded-lg shadow-lg border border-gray-200 dark:border-neutral-700 py-1 z-50 max-h-60 overflow-y-auto"
+          className="w-72 bg-white dark:bg-neutral-surface rounded-lg shadow-lg border border-gray-200 dark:border-neutral-700 py-1 max-h-60 overflow-y-auto"
+          style={dropdownStyle}
         >
           {sortedDocuments.map((doc) => {
             const isActive = doc.id === currentDocument?.id;
@@ -149,10 +179,11 @@ export const DocumentSwitcher: React.FC = () => {
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
-              </div>
-            );
-          })}
-        </motion.div>
+            </div>
+          );
+        })}
+        </motion.div>,
+        document.body
       )}
 
       <UnsavedChangesPrompt

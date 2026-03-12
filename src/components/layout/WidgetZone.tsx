@@ -75,12 +75,13 @@ export const WidgetZone: React.FC<WidgetZoneProps> = ({ zone, className, panelGr
   };
 
   // Chevron on panel border (edge adjacent to resize handle)
+  // Left/right zones inset to avoid overlapping with scrollbar
   const getControlPosition = () => {
     switch (zone) {
       case 'left':
-        return 'right-0 top-1/2 -translate-y-1/2';
+        return 'right-4 top-1/2 -translate-y-1/2';
       case 'right':
-        return 'left-0 top-1/2 -translate-y-1/2';
+        return 'left-4 top-1/2 -translate-y-1/2';
       case 'top':
         return 'bottom-0 left-1/2 -translate-x-1/2';
       case 'bottom':
@@ -110,7 +111,7 @@ export const WidgetZone: React.FC<WidgetZoneProps> = ({ zone, className, panelGr
       {/* Chevron on panel border - collapse/expand */}
       <div
         className={`
-          absolute z-10 w-fit
+          absolute z-50 w-fit
           p-0
           ${getControlPosition()}
           ${getHeaderVisibility()}
@@ -159,7 +160,7 @@ export const WidgetZone: React.FC<WidgetZoneProps> = ({ zone, className, panelGr
                   <WidgetContainer
                     key={widget.id}
                     widget={widget}
-                    className={zone === 'top' || zone === 'bottom' ? 'flex-1 min-w-80' : 'w-full'}
+                    className={zone === 'top' || zone === 'bottom' ? 'flex-1' : 'w-full'}
                   />
                 ))}
               </div>
