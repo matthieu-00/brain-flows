@@ -125,12 +125,13 @@ export const Header: React.FC = () => {
           <div className="flex items-center space-x-2">
             {/* New Document Split Button */}
             <div className="relative hidden sm:flex" ref={newDocDropdownRef}>
-              <div className="flex rounded-lg border border-neutral-300 dark:border-neutral-600 overflow-hidden">
+              <div className="flex rounded-lg border border-sage-700 dark:border-sage-600 overflow-hidden shadow-sm">
                 <button
                   type="button"
                   onClick={() => handleNewDocument()}
-                  className="px-3 py-1.5 flex items-center gap-1.5 text-sm font-medium bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700 text-neutral-900 dark:text-neutral-text border-r border-neutral-300 dark:border-neutral-600 transition-colors"
+                  className="px-3 py-1.5 flex items-center gap-1.5 text-sm font-medium bg-sage-900 dark:bg-sage-600 text-white hover:bg-sage-700 dark:hover:bg-sage-500 border-r border-sage-700 dark:border-sage-500 transition-colors"
                   title="New document"
+                  aria-label="Create new document"
                 >
                   <FilePlus className="w-4 h-4" />
                   New
@@ -140,6 +141,8 @@ export const Header: React.FC = () => {
                   onClick={() => setShowNewDocDropdown((prev) => !prev)}
                   className="px-1.5 py-1.5 flex items-center bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700 text-neutral-900 dark:text-neutral-text transition-colors"
                   title="Format for new document"
+                  aria-label="Choose format for new document"
+                  aria-expanded={showNewDocDropdown}
                 >
                   <ChevronDown className="w-4 h-4" />
                 </button>
@@ -170,12 +173,13 @@ export const Header: React.FC = () => {
 
             {/* Save/Export Split Button */}
             <div className="relative hidden sm:flex" ref={saveDropdownRef}>
-              <div className="flex rounded-lg border border-neutral-300 dark:border-neutral-600 overflow-hidden">
+              <div className="flex rounded-lg border border-sage-700 dark:border-sage-600 overflow-hidden shadow-sm">
                 <button
                   type="button"
                   onClick={handleSave}
-                  className="px-3 py-1.5 flex items-center gap-1.5 text-sm font-medium bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700 text-neutral-900 dark:text-neutral-text border-r border-neutral-300 dark:border-neutral-600 transition-colors"
+                  className="px-3 py-1.5 flex items-center gap-1.5 text-sm font-medium bg-sage-900 dark:bg-sage-600 text-white hover:bg-sage-700 dark:hover:bg-sage-500 border-r border-sage-700 dark:border-sage-500 transition-colors"
                   title="Save"
+                  aria-label="Save document"
                 >
                   <SaveAll className="w-4 h-4" />
                   Save
@@ -185,6 +189,8 @@ export const Header: React.FC = () => {
                   onClick={() => setShowSaveDropdown((prev) => !prev)}
                   className="px-1.5 py-1.5 flex items-center bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700 text-neutral-900 dark:text-neutral-text transition-colors"
                   title="Export options"
+                  aria-label="Export options"
+                  aria-expanded={showSaveDropdown}
                 >
                   <ChevronDown className="w-4 h-4" />
                 </button>
@@ -237,6 +243,7 @@ export const Header: React.FC = () => {
               size="sm"
               onClick={toggleDistractionFreeMode}
               title={distractionFreeMode ? 'Exit Focus Mode' : 'Enter Focus Mode'}
+              aria-label={distractionFreeMode ? 'Exit Focus Mode' : 'Enter Focus Mode'}
             >
               {distractionFreeMode ? (
                 <Minimize className="w-4 h-4" />
@@ -252,6 +259,8 @@ export const Header: React.FC = () => {
                 size="sm"
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 className="flex items-center space-x-2"
+                aria-label="User menu"
+                aria-expanded={showUserMenu}
               >
                 {(user?.avatar || settings.profile?.avatar) ? (
                   <img

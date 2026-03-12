@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { StopCircle, Check, X, Package } from 'lucide-react';
+import { StopCircle, Check, X, Package, Plus, Trash2 } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -10,6 +10,8 @@ import { WidgetType, WidgetZone } from '../../types';
 import { widgetConfig, widgetZones } from '../../constants/widgets';
 import { getOpenAIKeyError, getWeatherKeyError } from '../../utils/apiKeyValidation';
 import { KeyboardShortcutsHelp } from '../ui/KeyboardShortcutsHelp';
+
+type ManageTab = 'add' | 'remove';
 
 export const WidgetManagementModal: React.FC = () => {
   const {
@@ -23,6 +25,7 @@ export const WidgetManagementModal: React.FC = () => {
 
   const { widgets, addWidget, removeWidget, getWidgetsByZone, settings, updateSettings } = useLayoutStore();
 
+  const [activeTab, setActiveTab] = useState<ManageTab>('add');
   const [selectedWidgets, setSelectedWidgets] = useState<WidgetType[]>([]);
   const [selectedWidgetZones, setSelectedWidgetZones] = useState<Map<WidgetType, WidgetZone>>(new Map());
   const [widgetsToRemove, setWidgetsToRemove] = useState<string[]>([]);
@@ -30,9 +33,10 @@ export const WidgetManagementModal: React.FC = () => {
   const [weatherKey, setWeatherKey] = useState('');
   const [keyErrors, setKeyErrors] = useState<{ openai?: string; weather?: string }>({});
 
-  // Reset state when modal opens/closes
+  // When modal opens, reset state and set initial tab from open mode
   useEffect(() => {
     if (isWidgetModalOpen) {
+      setActiveTab(widgetModalMode);
       setSelectedWidgets([]);
       setSelectedWidgetZones(new Map());
       setWidgetsToRemove([]);
@@ -41,27 +45,25 @@ export const WidgetManagementModal: React.FC = () => {
       setKeyErrors({});
       setPendingChanges(false);
     }
-  }, [isWidgetModalOpen, selectedZone, setPendingChanges, settings.apiKeys?.openai, settings.apiKeys?.weather]);
+  }, [isWidgetModalOpen, widgetModalMode, setPendingChanges, settings.apiKeys?.openai, settings.apiKeys?.weather]);
 
   const handleWidgetSelect = (type: WidgetType) => {
-    if (widgetModalMode === 'add') {
-      const newSelection = selectedWidgets.includes(type)
-        ? selectedWidgets.filter(w => w !== type)
-        : [...selectedWidgets, type];
+    const newSelection = selectedWidgets.includes(type)
+      ? selectedWidgets.filter(w => w !== type)
+      : [...selectedWidgets, type];
 
-      if (newSelection.includes(type)) {
-        setSelectedWidgetZones((prev) => new Map(prev).set(type, selectedZone || 'right'));
-      } else {
-        setSelectedWidgetZones((prev) => {
-          const next = new Map(prev);
-          next.delete(type);
-          return next;
-        });
-      }
-
-      setSelectedWidgets(newSelection);
-      setPendingChanges(newSelection.length > 0);
+    if (newSelection.includes(type)) {
+      setSelectedWidgetZones((prev) => new Map(prev).set(type, selectedZone || 'right'));
+    } else {
+      setSelectedWidgetZones((prev) => {
+        const next = new Map(prev);
+        next.delete(type);
+        return next;
+      });
     }
+
+    setSelectedWidgets(newSelection);
+    setPendingChanges(newSelection.length > 0);
   };
 
   const handleWidgetZoneChange = (type: WidgetType, zone: WidgetZone) => {
@@ -69,22 +71,20 @@ export const WidgetManagementModal: React.FC = () => {
   };
 
   const handleWidgetRemove = (widgetId: string) => {
-    if (widgetModalMode === 'remove') {
-      const newRemoval = widgetsToRemove.includes(widgetId)
-        ? widgetsToRemove.filter(id => id !== widgetId)
-        : [...widgetsToRemove, widgetId];
-      
-      setWidgetsToRemove(newRemoval);
-      setPendingChanges(newRemoval.length > 0);
-    }
+    const newRemoval = widgetsToRemove.includes(widgetId)
+      ? widgetsToRemove.filter(id => id !== widgetId)
+      : [...widgetsToRemove, widgetId];
+
+    setWidgetsToRemove(newRemoval);
+    setPendingChanges(newRemoval.length > 0);
   };
 
-  const handleSave = () => {
-    if (widgetModalMode === 'add') {
+  const handleApplyChanges = () => {
+    if (selectedWidgets.length > 0) {
       const openaiSelected = selectedWidgets.includes('ai-chat');
       const weatherSelected = selectedWidgets.includes('weather');
-      const openaiError = openaiSelected ? getOpenAIKeyError(openaiKey) : '';
-      const weatherError = weatherSelected ? getWeatherKeyError(weatherKey) : '';
+      const openaiError = openaiSelected ? getOpenAIKeyError(openaiKey, true) : '';
+      const weatherError = weatherSelected ? getWeatherKeyError(weatherKey, true) : '';
 
       if (openaiError || weatherError) {
         setKeyErrors({
@@ -108,15 +108,20 @@ export const WidgetManagementModal: React.FC = () => {
           },
         });
       }
-    } else {
-      widgetsToRemove.forEach((widgetId) => {
-        removeWidget(widgetId);
-      });
     }
 
+    widgetsToRemove.forEach((widgetId) => removeWidget(widgetId));
+
+    setSelectedWidgets([]);
+    setSelectedWidgetZones(new Map());
+    setWidgetsToRemove([]);
     setPendingChanges(false);
     closeWidgetModal();
   };
+
+  const hasPendingAdd = selectedWidgets.length > 0;
+  const hasPendingRemove = widgetsToRemove.length > 0;
+  const hasAnyPending = hasPendingAdd || hasPendingRemove;
 
   const widgetCountInZone = (zone: WidgetZone) => {
     const current = getWidgetsByZone(zone).length;
@@ -143,15 +148,53 @@ export const WidgetManagementModal: React.FC = () => {
       <Modal
         isOpen={isWidgetModalOpen}
         onClose={closeWidgetModal}
-        title={widgetModalMode === 'add' ? 'Add Widgets' : 'Remove Widgets'}
+        title="Manage widgets"
         size="lg"
       >
         <div className="space-y-6">
-          {/* Add Mode Content */}
-          {widgetModalMode === 'add' && (
+          {/* Tabs: Add | Remove */}
+          <div className="flex rounded-lg border border-neutral-300 dark:border-neutral-700 p-1 bg-neutral-100 dark:bg-neutral-800">
+            <button
+              type="button"
+              onClick={() => setActiveTab('add')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'add'
+                  ? 'bg-white dark:bg-neutral-700 text-sage-800 dark:text-sage-400 shadow-sm'
+                  : 'text-neutral-600 dark:text-neutral-textMuted hover:text-neutral-900 dark:hover:text-neutral-text'
+              }`}
+              aria-pressed={activeTab === 'add'}
+              aria-label="Add widgets tab"
+            >
+              <Plus className="w-4 h-4" />
+              Add
+              {(widgetConfig.length - getExistingWidgetTypes().size) > 0 && (
+                <span className="text-xs opacity-75">({widgetConfig.length - getExistingWidgetTypes().size} available)</span>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('remove')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md text-sm font-medium transition-colors ${
+                activeTab === 'remove'
+                  ? 'bg-white dark:bg-neutral-700 text-sage-800 dark:text-sage-400 shadow-sm'
+                  : 'text-neutral-600 dark:text-neutral-textMuted hover:text-neutral-900 dark:hover:text-neutral-text'
+              }`}
+              aria-pressed={activeTab === 'remove'}
+              aria-label="Remove widgets tab"
+            >
+              <Trash2 className="w-4 h-4" />
+              Remove
+              {widgets.length > 0 && (
+                <span className="text-xs opacity-75">({widgets.length} active)</span>
+              )}
+            </button>
+          </div>
+
+          {/* Add tab content */}
+          {activeTab === 'add' && (
             <>
               <p className="text-sm text-neutral-600 dark:text-neutral-textMuted">
-                Select widgets to add and choose their panel. Changes apply when you click Add.
+                Select widgets to add and choose their panel. You can also switch to Remove to disable widgets.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-80 overflow-y-auto">
                 {widgetConfig.map((widget) => {
@@ -171,23 +214,22 @@ export const WidgetManagementModal: React.FC = () => {
                           : 'border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 hover:bg-sage-50 dark:hover:bg-neutral-800'
                       }`}
                     >
-                      <div
+                      <label
                         className={`flex items-start space-x-3 ${!alreadyExists ? 'cursor-pointer' : 'cursor-not-allowed'}`}
-                        onClick={() => !alreadyExists && handleWidgetSelect(widget.type)}
                       >
-                        <div className="text-neutral-500 dark:text-neutral-textMuted">
+                        <div className="text-neutral-500 dark:text-neutral-textMuted" aria-hidden="true">
                             {React.createElement(widget.icon, { className: 'w-6 h-6' })}
                           </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
-                            <h4 className="text-sm font-medium text-neutral-900 dark:text-neutral-text">
+                            <span className="text-sm font-medium text-neutral-900 dark:text-neutral-text">
                               {widget.name}
-                            </h4>
+                            </span>
                             {!alreadyExists && (
                               <input
                                 type="checkbox"
                                 checked={isSelected}
-                                readOnly
+                                onChange={() => handleWidgetSelect(widget.type)}
                                 className="w-4 h-4 text-sage-900 rounded"
                               />
                             )}
@@ -199,7 +241,7 @@ export const WidgetManagementModal: React.FC = () => {
                             {widget.description}
                           </p>
                         </div>
-                      </div>
+                      </label>
 
                       {isSelected && !alreadyExists && (
                         <div className="mt-3 pt-3 border-t border-neutral-200 dark:border-neutral-700">
@@ -289,18 +331,18 @@ export const WidgetManagementModal: React.FC = () => {
             </>
           )}
 
-          {/* Remove Mode Content */}
-          {widgetModalMode === 'remove' && (
+          {/* Remove tab content */}
+          {activeTab === 'remove' && (
             <div className="space-y-3">
-              <label className="block text-sm font-medium text-neutral-900 dark:text-neutral-text">
-                Current Widgets
-              </label>
+              <p className="text-sm text-neutral-600 dark:text-neutral-textMuted">
+                Select widgets to remove from your layout. You can also switch to Add to enable more widgets.
+              </p>
 
               {widgets.length === 0 ? (
                 <div className="text-center py-12 text-neutral-500 dark:text-neutral-textMuted">
                   <div className="text-4xl mb-3">📭</div>
                   <p className="text-sm">No widgets to remove</p>
-                  <p className="text-xs">Add some widgets first!</p>
+                  <p className="text-xs">Use the Add tab to enable widgets first.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-80 overflow-y-auto">
@@ -356,20 +398,20 @@ export const WidgetManagementModal: React.FC = () => {
           {/* Action Buttons */}
           <div className="flex space-x-3 pt-4 border-t border-gray-200 dark:border-neutral-700">
             <Button
-              onClick={handleSave}
-              disabled={
-                (widgetModalMode === 'add' && selectedWidgets.length === 0) ||
-                (widgetModalMode === 'remove' && widgetsToRemove.length === 0)
-              }
+              onClick={handleApplyChanges}
+              disabled={!hasAnyPending}
               className="flex-1"
             >
               <Check className="w-4 h-4 mr-2" />
-              {widgetModalMode === 'add' 
+              {hasPendingAdd && hasPendingRemove
+                ? `Apply: Add ${selectedWidgets.length}, Remove ${widgetsToRemove.length}`
+                : hasPendingAdd
                 ? `Add ${selectedWidgets.length} Widget${selectedWidgets.length !== 1 ? 's' : ''}`
-                : `Remove ${widgetsToRemove.length} Widget${widgetsToRemove.length !== 1 ? 's' : ''}`
-              }
+                : hasPendingRemove
+                ? `Remove ${widgetsToRemove.length} Widget${widgetsToRemove.length !== 1 ? 's' : ''}`
+                : 'Apply changes'}
             </Button>
-            
+
             <Button
               variant="outline"
               onClick={closeWidgetModal}

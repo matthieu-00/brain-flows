@@ -11,14 +11,26 @@ export const isValidWeatherKey = (key?: string): boolean => {
   return WEATHER_KEY_PATTERN.test(key.trim());
 };
 
-export const getOpenAIKeyError = (key?: string): string => {
-  if (!key?.trim()) return ''; // Empty is allowed (key optional when not using AI Chat)
+/**
+ * Validate an OpenAI key. When `required` is true (widget is being enabled),
+ * an empty key is treated as an error instead of silently passing.
+ */
+export const getOpenAIKeyError = (key?: string, required = false): string => {
+  if (!key?.trim()) {
+    return required ? 'An OpenAI API key is required to use this widget.' : '';
+  }
   if (!isValidOpenAIKey(key)) return 'OpenAI key should start with sk- and be at least 24 characters.';
   return '';
 };
 
-export const getWeatherKeyError = (key?: string): string => {
-  if (!key?.trim()) return '';
+/**
+ * Validate a weather key. When `required` is true (widget is being enabled),
+ * an empty key is treated as an error instead of silently passing.
+ */
+export const getWeatherKeyError = (key?: string, required = false): string => {
+  if (!key?.trim()) {
+    return required ? 'A weather API key is required to use this widget.' : '';
+  }
   if (!isValidWeatherKey(key)) return 'Weather key must be alphanumeric and 24-64 characters.';
   return '';
 };

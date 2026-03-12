@@ -1,8 +1,36 @@
 import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
+import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware';
 import { ImperativePanelGroupHandle } from 'react-resizable-panels';
 import { Widget, WidgetType, WidgetZone, LayoutConfig, AppSettings } from '../types';
 import { dateReplacer, dateReviver } from '../utils/persistDates';
+
+/**
+ * Wraps localStorage with a debounced setItem to avoid thrashing storage
+ * on rapid state updates (widget drag, timer ticks, panel resize).
+ */
+function createDebouncedStorage(ms = 500): StateStorage {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  let pendingKey: string | null = null;
+  let pendingValue: string | null = null;
+
+  return {
+    getItem: (name) => localStorage.getItem(name),
+    setItem: (name, value) => {
+      pendingKey = name;
+      pendingValue = value;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        if (pendingKey && pendingValue !== null) {
+          localStorage.setItem(pendingKey, pendingValue);
+        }
+        timer = null;
+        pendingKey = null;
+        pendingValue = null;
+      }, ms);
+    },
+    removeItem: (name) => localStorage.removeItem(name),
+  };
+}
 
 interface LayoutState {
   widgets: Widget[];
@@ -94,7 +122,7 @@ export const useLayoutStore = create<LayoutState>()(
 
       updateWidget: (widgetId: string, updates: Partial<Widget>) => {
         set(state => ({
-          widgets: state.widgets.map(w => 
+          widgets: state.widgets.map(w =>
             w.id === widgetId ? { ...w, ...updates } : w
           ),
         }));
@@ -292,7 +320,7 @@ export const useLayoutStore = create<LayoutState>()(
     }),
     {
       name: 'layout-storage',
-      storage: createJSONStorage(() => localStorage, {
+      storage: createJSONStorage(() => createDebouncedStorage(500), {
         replacer: dateReplacer,
         reviver: dateReviver,
       }),

@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Widget } from '../../types';
 import { useLayoutStore } from '../../store/layoutStore';
 import { Button } from '../ui/Button';
+import { EmptyState } from '../ui/EmptyState';
 
 interface StickyNotesWidgetProps {
   widget: Widget;
@@ -158,13 +159,11 @@ const StickyNotesWidget: React.FC<StickyNotesWidgetProps> = ({ widget }) => {
         className="relative aspect-[4/3] bg-gray-50 dark:bg-neutral-700 rounded-lg border-2 border-dashed border-gray-300 dark:border-neutral-700 overflow-hidden"
       >
         {notes.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-gray-500 dark:text-neutral-textMuted">
-            <div className="text-center">
-              <div className="text-4xl mb-2">📝</div>
-              <p className="text-sm">No sticky notes yet</p>
-              <p className="text-xs">Click "Add Note" to create your first note</p>
-            </div>
-          </div>
+          <EmptyState
+            title="No sticky notes yet"
+            description='Click "Add Note" to create your first note'
+            className="h-full"
+          />
         ) : (
           <AnimatePresence>
             {notes.map(note => (
@@ -209,9 +208,9 @@ const StickyNoteComponent: React.FC<StickyNoteComponentProps> = ({
   const dragStartRef = useRef({ x: 0, y: 0 });
   const noteRef = useRef<HTMLDivElement>(null);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handlePointerDown = (e: React.PointerEvent) => {
     if (isEditing) return;
-
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
     dragStartRef.current = {
       x: e.clientX - note.position.x,
       y: e.clientY - note.position.y,
@@ -219,32 +218,21 @@ const StickyNoteComponent: React.FC<StickyNoteComponentProps> = ({
     setIsDragging(true);
   };
 
-  const handleMouseMove = useCallback(
-    (e: MouseEvent) => {
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      if (!isDragging) return;
       const newPosition = {
         x: Math.max(0, Math.min(containerBounds.width - NOTE_SIZE, e.clientX - dragStartRef.current.x)),
         y: Math.max(0, Math.min(containerBounds.height - NOTE_SIZE, e.clientY - dragStartRef.current.y)),
       };
       onDrag(newPosition);
     },
-    [onDrag, containerBounds]
+    [isDragging, onDrag, containerBounds]
   );
 
-  const handleMouseUp = useCallback(() => {
+  const handlePointerUp = useCallback(() => {
     setIsDragging(false);
   }, []);
-
-  React.useEffect(() => {
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-
-      return () => {
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-      };
-    }
-  }, [isDragging, handleMouseMove, handleMouseUp]);
 
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     onUpdate({ content: e.target.value });
@@ -273,21 +261,34 @@ const StickyNoteComponent: React.FC<StickyNoteComponentProps> = ({
         top: note.position.y,
         transform: isDragging ? 'rotate(5deg)' : 'rotate(0deg)',
       }}
-      onMouseDown={handleMouseDown}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
       onDoubleClick={handleDoubleClick}
     >
-      {/* Delete Button */}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete();
-        }}
-        className="absolute -top-2 -right-2 w-6 h-6 p-0 bg-red-500 text-white rounded-full hover:bg-red-600"
-      >
-        <X className="w-3 h-3" />
-      </Button>
+      {/* Action buttons */}
+      <div className="absolute -top-2 -right-2 flex gap-1">
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); setIsEditing(true); }}
+          className="w-6 h-6 p-0 flex items-center justify-center bg-neutral-600 text-white rounded-full hover:bg-neutral-700 text-xs"
+          aria-label="Edit note"
+        >
+          ✏️
+        </button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          className="w-6 h-6 p-0 bg-red-500 text-white rounded-full hover:bg-red-600"
+          aria-label="Delete note"
+        >
+          <X className="w-3 h-3" />
+        </Button>
+      </div>
 
       {/* Note Content */}
       {isEditing ? (
@@ -307,10 +308,9 @@ const StickyNoteComponent: React.FC<StickyNoteComponentProps> = ({
         </div>
       )}
 
-      {/* Note Footer */}
-      <div className="absolute bottom-1 right-1 text-xs opacity-50">
-        {isEditing ? '✏️' : '📝'}
-      </div>
+      {isEditing && (
+        <div className="absolute bottom-1 right-1 text-xs opacity-50">editing</div>
+      )}
     </motion.div>
   );
 };

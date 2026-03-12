@@ -1,12 +1,13 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { ImperativePanelGroupHandle } from 'react-resizable-panels';
 import { useShallow } from 'zustand/react/shallow';
 import { useLayoutStore } from '../../store/layoutStore';
 import { useUIStore } from '../../store/uiStore';
 import { WidgetZone as WidgetZoneType } from '../../types';
 import { Button } from '../ui/Button';
+import { EmptyState } from '../ui/EmptyState';
 import { WidgetContainer } from './WidgetContainer';
 
 interface WidgetZoneProps {
@@ -124,6 +125,7 @@ export const WidgetZone: React.FC<WidgetZoneProps> = ({ zone, className, panelGr
           onClick={() => toggleZoneCollapsedWithPanelGroup(zone, panelGroupRef)}
           className={`${chevronSizeClass} ${chevronButtonVisualClass} !p-0 flex items-center justify-center text-sage-900 focus:!ring-0 focus:!ring-offset-0`}
           title={isCollapsed ? `Expand ${zone} zone` : `Collapse ${zone} zone`}
+          aria-label={isCollapsed ? `Expand ${zone} zone` : `Collapse ${zone} zone`}
         >
           {getCollapseIcon(chevronIconClass)}
         </Button>
@@ -142,12 +144,15 @@ export const WidgetZone: React.FC<WidgetZoneProps> = ({ zone, className, panelGr
               <div className="flex items-center justify-center h-full">
                 <button
                   onClick={() => openWidgetModal('add', zone)}
-                  className="text-center text-neutral-400 dark:text-neutral-textMuted hover:text-sage-700 dark:hover:text-sage-700 transition-colors cursor-pointer"
+                  className="group transition-colors cursor-pointer"
+                  aria-label={`Add widgets to ${zone} zone`}
                 >
-                  <div className="flex justify-center mb-3">
-                    <EmptyStateIcon />
-                  </div>
-                  <p className="text-sm text-neutral-600 dark:text-neutral-textMuted">Click to add widgets.</p>
+                  <EmptyState
+                    icon={<EmptyStateIcon />}
+                    title="No widgets yet"
+                    description="Click to add widgets to this zone"
+                    className="group-hover:text-sage-700 dark:group-hover:text-sage-400"
+                  />
                 </button>
               </div>
             ) : (
@@ -163,6 +168,16 @@ export const WidgetZone: React.FC<WidgetZoneProps> = ({ zone, className, panelGr
                     className={zone === 'top' || zone === 'bottom' ? 'flex-1' : 'w-full'}
                   />
                 ))}
+                {widgets.length < 3 && (
+                  <button
+                    onClick={() => openWidgetModal('add', zone)}
+                    className="w-full py-2 flex items-center justify-center gap-1.5 text-xs text-neutral-400 dark:text-neutral-textMuted hover:text-sage-700 dark:hover:text-sage-400 border border-dashed border-neutral-300 dark:border-neutral-700 rounded-lg hover:border-sage-400 dark:hover:border-sage-600 transition-colors"
+                    aria-label={`Add another widget to ${zone} zone`}
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Add widget
+                  </button>
+                )}
               </div>
             )}
           </motion.div>

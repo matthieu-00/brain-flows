@@ -4,11 +4,11 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { CollapsibleSection } from '../ui/CollapsibleSection';
 import { useLayoutStore } from '../../store/layoutStore';
-import { AppSettings, WidgetType, WidgetZone } from '../../types';
+import { useUIStore } from '../../store/uiStore';
+import { AppSettings } from '../../types';
 import { getOpenAIKeyError, getWeatherKeyError } from '../../utils/apiKeyValidation';
-import { widgetConfig as widgetTypes, widgetZones as zones } from '../../constants/widgets';
 import { KeyboardShortcutsHelp } from '../ui/KeyboardShortcutsHelp';
-import { User, Camera } from 'lucide-react';
+import { User, Camera, ExternalLink } from 'lucide-react';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -16,14 +16,11 @@ interface SettingsModalProps {
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
-  const { settings, updateSettings, widgets, addWidget, removeWidget, moveWidget, getWidgetsByZone } = useLayoutStore();
+  const { settings, updateSettings, widgets } = useLayoutStore();
+  const openWidgetModal = useUIStore((state) => state.openWidgetModal);
   const [openaiKey, setOpenaiKey] = useState(settings.apiKeys?.openai || '');
   const [weatherKey, setWeatherKey] = useState(settings.apiKeys?.weather || '');
   const [keyErrors, setKeyErrors] = useState<{ openai?: string; weather?: string }>({});
-  const [pendingToAdd, setPendingToAdd] = useState<Set<WidgetType>>(new Set());
-  const [pendingToRemove, setPendingToRemove] = useState<Set<string>>(new Set());
-  const [pendingNewWidgetZones, setPendingNewWidgetZones] = useState<Map<WidgetType, WidgetZone>>(new Map());
-  const [pendingZoneChanges, setPendingZoneChanges] = useState<Map<string, WidgetZone>>(new Map());
   const [displayName, setDisplayName] = useState(settings.profile?.displayName || '');
   const [email, setEmail] = useState(settings.profile?.email || '');
   const [currentPassword, setCurrentPassword] = useState('');
@@ -31,6 +28,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const hasAIChat = widgets.some((w) => w.type === 'ai-chat' && w.isEnabled);
+  const hasWeather = widgets.some((w) => w.type === 'weather' && w.isEnabled);
 
   useEffect(() => {
     if (isOpen) {
@@ -43,10 +43,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      setPendingToAdd(new Set());
-      setPendingToRemove(new Set());
-      setPendingNewWidgetZones(new Map());
-      setPendingZoneChanges(new Map());
     }
   }, [
     isOpen,
@@ -88,79 +84,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     }
   };
 
-  const isWidgetEnabled = (type: WidgetType) => {
-    const existingWidget = widgets.find((w) => w.type === type && w.isEnabled);
-    if (existingWidget && pendingToRemove.has(existingWidget.id)) return false;
-    if (existingWidget) return true;
-    return pendingToAdd.has(type);
-  };
-
-  const getEffectiveZone = (widget: { id: string; type: WidgetType; zone: WidgetZone }) => {
-    return pendingZoneChanges.get(widget.id) ?? widget.zone;
-  };
-
-  const getEffectiveZoneForPending = (type: WidgetType) => {
-    return pendingNewWidgetZones.get(type) ?? 'right';
-  };
-
-  const widgetCountInZone = (zone: WidgetZone) => {
-    const current = getWidgetsByZone(zone).filter((w) => !pendingToRemove.has(w.id)).length;
-    const fromPending = [...pendingToAdd].filter((t) => {
-      const existing = widgets.find((w) => w.type === t);
-      return !existing || pendingToRemove.has(existing.id);
-    }).filter((t) => getEffectiveZoneForPending(t) === zone).length;
-    return current + fromPending;
-  };
-
-  const isZoneAvailable = (zone: WidgetZone) => {
-    return widgetCountInZone(zone) < 3;
-  };
-
-  const toggleWidget = (type: WidgetType) => {
-    const existingWidget = widgets.find((w) => w.type === type && w.isEnabled);
-
-    if (existingWidget) {
-      if (pendingToRemove.has(existingWidget.id)) {
-        setPendingToRemove((prev) => {
-          const next = new Set(prev);
-          next.delete(existingWidget.id);
-          return next;
-        });
-      } else {
-        setPendingToRemove((prev) => new Set(prev).add(existingWidget.id));
-      }
-    } else {
-      if (pendingToAdd.has(type)) {
-        setPendingToAdd((prev) => {
-          const next = new Set(prev);
-          next.delete(type);
-          return next;
-        });
-        setPendingNewWidgetZones((prev) => {
-          const next = new Map(prev);
-          next.delete(type);
-          return next;
-        });
-      } else {
-        setPendingToAdd((prev) => new Set(prev).add(type));
-        setPendingNewWidgetZones((prev) => new Map(prev).set(type, 'right'));
-      }
-    }
-  };
-
-  const handleWidgetZoneChange = (widgetOrType: { id?: string; type: WidgetType }, newZone: WidgetZone) => {
-    if (widgetOrType.id) {
-      setPendingZoneChanges((prev) => new Map(prev).set(widgetOrType.id!, newZone));
-    } else {
-      setPendingNewWidgetZones((prev) => new Map(prev).set(widgetOrType.type, newZone));
-    }
-  };
-
   const handleSaveSettings = () => {
-    const openaiEnabled = isWidgetEnabled('ai-chat');
-    const weatherEnabled = isWidgetEnabled('weather');
-    const openaiError = openaiEnabled ? getOpenAIKeyError(openaiKey) : '';
-    const weatherError = weatherEnabled ? getWeatherKeyError(weatherKey) : '';
+    const openaiError = hasAIChat ? getOpenAIKeyError(openaiKey, true) : getOpenAIKeyError(openaiKey);
+    const weatherError = hasWeather ? getWeatherKeyError(weatherKey, true) : getWeatherKeyError(weatherKey);
     const hasKeyErrors = Boolean(openaiError || weatherError);
 
     if (hasKeyErrors) {
@@ -171,7 +97,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       return;
     }
 
-    // Validate password change if user entered new password
     if (newPassword || confirmPassword || currentPassword) {
       if (newPassword.length < 8) {
         setPasswordError('New password must be at least 8 characters');
@@ -184,22 +109,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       setPasswordError(null);
     }
 
-    // Apply pending widget changes (move first, then remove, then add)
-    pendingZoneChanges.forEach((zone, widgetId) => {
-      const newPosition = getWidgetsByZone(zone).length;
-      moveWidget(widgetId, zone, newPosition);
-    });
-    pendingToRemove.forEach((id) => removeWidget(id));
-    pendingToAdd.forEach((type) => {
-      const zone = pendingNewWidgetZones.get(type) ?? 'right';
-      addWidget(type, zone);
-    });
-
     updateSettings({
       apiKeys: {
         ...settings.apiKeys,
-        openai: openaiEnabled ? openaiKey.trim() : settings.apiKeys?.openai,
-        weather: weatherEnabled ? weatherKey.trim() : settings.apiKeys?.weather,
+        openai: openaiKey.trim() || settings.apiKeys?.openai,
+        weather: weatherKey.trim() || settings.apiKeys?.weather,
       },
       profile: {
         ...settings.profile,
@@ -428,138 +342,69 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
           </div>
         </CollapsibleSection>
 
-        {/* Widget Management */}
+        {/* Widget Management - redirect to canonical modal */}
         <CollapsibleSection title="Widgets" defaultOpen={true}>
-          <p className="text-sm text-neutral-600 dark:text-neutral-textMuted mb-3">
-            Toggle widgets on or off and choose their panel. Changes apply when you click Save.
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {widgetTypes.map((widget) => {
-                const enabled = isWidgetEnabled(widget.type);
-                const existingWidget = widgets.find((w) => w.type === widget.type && w.isEnabled);
-                const isPendingAdd = pendingToAdd.has(widget.type);
-                const isPendingRemove = existingWidget && pendingToRemove.has(existingWidget.id);
-                const showApiKey = enabled && widget.apiKeyType;
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-neutral-600 dark:text-neutral-textMuted">
+                {widgets.length} widget{widgets.length !== 1 ? 's' : ''} active
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  onClose();
+                  setTimeout(() => openWidgetModal('add'), 150);
+                }}
+                className="flex items-center gap-1.5"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                Manage widgets
+              </Button>
+            </div>
 
-                const effectiveZone = existingWidget && !isPendingRemove
-                  ? getEffectiveZone(existingWidget)
-                  : isPendingAdd
-                  ? getEffectiveZoneForPending(widget.type)
-                  : null;
+            {/* API key fields shown only when relevant widgets are active */}
+            {hasAIChat && (
+              <Input
+                label="OpenAI API Key"
+                type="password"
+                value={openaiKey}
+                onChange={(e) => {
+                  setOpenaiKey(e.target.value);
+                  if (keyErrors.openai) setKeyErrors((prev) => ({ ...prev, openai: undefined }));
+                }}
+                onBlur={() => {
+                  setKeyErrors((prev) => ({
+                    ...prev,
+                    openai: getOpenAIKeyError(openaiKey) || undefined,
+                  }));
+                }}
+                placeholder="sk-..."
+                hint="Required for AI Chat"
+                error={keyErrors.openai}
+              />
+            )}
 
-                return (
-                  <div
-                    key={widget.type}
-                    className={`p-3 border rounded-lg transition-colors ${
-                      enabled
-                        ? 'border-sage-700 bg-sage-100 dark:bg-sage-400/20'
-                        : 'border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 hover:bg-sage-50 dark:hover:bg-neutral-800'
-                    }`}
-                  >
-                    <div
-                      className="flex items-start space-x-3 cursor-pointer"
-                      onClick={() => toggleWidget(widget.type)}
-                    >
-                      <div className="text-neutral-500 dark:text-neutral-textMuted">
-                          {React.createElement(widget.icon, { className: 'w-6 h-6' })}
-                        </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-sm font-medium text-neutral-900 dark:text-neutral-text">{widget.name}</h4>
-                          <input
-                            type="checkbox"
-                            checked={enabled}
-                            readOnly
-                            className="w-4 h-4 text-sage-900 rounded"
-                          />
-                        </div>
-                        <p className="text-xs text-neutral-600 dark:text-neutral-textMuted mt-1">{widget.description}</p>
-                      </div>
-                    </div>
-
-                    {enabled && effectiveZone !== null && (
-                      <div className="mt-3 pt-3 border-t border-neutral-200 dark:border-neutral-700">
-                        <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-textMuted mb-1.5">
-                          Panel
-                        </label>
-                        <div className="flex flex-wrap gap-1.5">
-                          {zones.map((zone) => (
-                            <button
-                              key={zone.value}
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleWidgetZoneChange(
-                                  existingWidget && !isPendingRemove
-                                    ? { id: existingWidget.id, type: widget.type }
-                                    : { type: widget.type },
-                                  zone.value
-                                );
-                              }}
-                              disabled={!isZoneAvailable(zone.value) && effectiveZone !== zone.value}
-                              className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
-                                effectiveZone === zone.value
-                                  ? 'bg-sage-700 text-white dark:bg-sage-600'
-                                  : isZoneAvailable(zone.value) || effectiveZone === zone.value
-                                  ? 'bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-sage-200 dark:hover:bg-sage-800'
-                                  : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 cursor-not-allowed'
-                              }`}
-                            >
-                              {zone.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {showApiKey && widget.apiKeyType === 'openai' && (
-                      <div className="mt-3 pt-3 border-t border-neutral-200 dark:border-neutral-700" onClick={(e) => e.stopPropagation()}>
-                        <Input
-                          label="OpenAI API Key"
-                          type="password"
-                          value={openaiKey}
-                          onChange={(e) => {
-                            setOpenaiKey(e.target.value);
-                            if (keyErrors.openai) setKeyErrors((prev) => ({ ...prev, openai: undefined }));
-                          }}
-                          onBlur={() => {
-                            setKeyErrors((prev) => ({
-                              ...prev,
-                              openai: getOpenAIKeyError(openaiKey) || undefined,
-                            }));
-                          }}
-                          placeholder="sk-..."
-                          hint="Required for AI Chat"
-                          error={keyErrors.openai}
-                        />
-                      </div>
-                    )}
-
-                    {showApiKey && widget.apiKeyType === 'weather' && (
-                      <div className="mt-3 pt-3 border-t border-neutral-200 dark:border-neutral-700" onClick={(e) => e.stopPropagation()}>
-                        <Input
-                          label="Weather API Key"
-                          type="password"
-                          value={weatherKey}
-                          onChange={(e) => {
-                            setWeatherKey(e.target.value);
-                            if (keyErrors.weather) setKeyErrors((prev) => ({ ...prev, weather: undefined }));
-                          }}
-                          onBlur={() => {
-                            setKeyErrors((prev) => ({
-                              ...prev,
-                              weather: getWeatherKeyError(weatherKey) || undefined,
-                            }));
-                          }}
-                          placeholder="Your weather API key"
-                          hint="Required for Weather"
-                          error={keyErrors.weather}
-                        />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+            {hasWeather && (
+              <Input
+                label="Weather API Key"
+                type="password"
+                value={weatherKey}
+                onChange={(e) => {
+                  setWeatherKey(e.target.value);
+                  if (keyErrors.weather) setKeyErrors((prev) => ({ ...prev, weather: undefined }));
+                }}
+                onBlur={() => {
+                  setKeyErrors((prev) => ({
+                    ...prev,
+                    weather: getWeatherKeyError(weatherKey) || undefined,
+                  }));
+                }}
+                placeholder="Your weather API key"
+                hint="Required for Weather"
+                error={keyErrors.weather}
+              />
+            )}
           </div>
         </CollapsibleSection>
 

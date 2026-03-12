@@ -1,10 +1,12 @@
-import React, { Suspense, useMemo } from 'react';
+import React, { Suspense, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, Minimize2, Maximize2 } from 'lucide-react';
 import { Widget } from '../../types';
 import { useLayoutStore } from '../../store/layoutStore';
 import { getWidgetSizingSpec } from '../../constants/widgets';
 import { Button } from '../ui/Button';
+import { IconButton } from '../ui/IconButton';
+import { InlineAlert } from '../ui/InlineAlert';
 import { ErrorBoundary } from '../ErrorBoundary';
 
 // Lazy load widgets for better performance
@@ -44,6 +46,7 @@ const WidgetContainer: React.FC<WidgetContainerProps> = ({
   const removeWidget = useLayoutStore((state) => state.removeWidget);
   const toggleWidgetCollapsed = useLayoutStore((state) => state.toggleWidgetCollapsed);
   const sizingSpec = useMemo(() => getWidgetSizingSpec(widget.type), [widget.type]);
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
 
   const isHorizontalZone = widget.zone === 'top' || widget.zone === 'bottom';
   const containerStyle = useMemo(() => {
@@ -113,31 +116,51 @@ const WidgetContainer: React.FC<WidgetContainerProps> = ({
         </h3>
         
         <div className="flex items-center space-x-1">
-          <Button
-            variant="ghost"
-            size="sm"
+          <IconButton
+            label={widget.isCollapsed ? `Expand ${widgetDisplayName}` : `Collapse ${widgetDisplayName}`}
             onClick={() => toggleWidgetCollapsed(widget.id)}
-            className="p-1.5 w-7 h-7 hover:bg-neutral-200 dark:hover:bg-neutral-800"
-            title={widget.isCollapsed ? 'Expand widget' : 'Collapse widget'}
           >
             {widget.isCollapsed ? (
               <Maximize2 className="w-3 h-3" />
             ) : (
               <Minimize2 className="w-3 h-3" />
             )}
-          </Button>
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => removeWidget(widget.id)}
-            className="p-1.5 w-7 h-7 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-            title="Remove widget"
+          </IconButton>
+
+          <IconButton
+            variant="danger"
+            label={`Remove ${widgetDisplayName}`}
+            onClick={() => setShowRemoveConfirm(true)}
           >
             <X className="w-3 h-3" />
-          </Button>
+          </IconButton>
         </div>
       </div>
+
+      {/* Remove confirmation */}
+      {showRemoveConfirm && (
+        <div className="px-4 py-2 bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-800 flex items-center justify-between gap-2">
+          <span className="text-xs text-red-700 dark:text-red-400">Remove {widgetDisplayName}?</span>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => removeWidget(widget.id)}
+              className="text-xs px-2 py-1"
+            >
+              Remove
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowRemoveConfirm(false)}
+              className="text-xs px-2 py-1"
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Widget Content */}
       {!widget.isCollapsed && (
@@ -156,18 +179,22 @@ const WidgetContainer: React.FC<WidgetContainerProps> = ({
           }>
             <ErrorBoundary
               fallback={
-                <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-4 text-sm text-red-700 dark:text-red-400">
+                <InlineAlert
+                  variant="error"
+                  action={
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => removeWidget(widget.id)}
+                      className="shrink-0 border-red-300 dark:border-red-700 text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30"
+                    >
+                      Remove
+                    </Button>
+                  }
+                >
                   <p className="font-semibold">Widget failed to render</p>
                   <p className="mt-1">Try removing and adding this widget again.</p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => removeWidget(widget.id)}
-                    className="mt-3 border-red-300 dark:border-red-700 text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30"
-                  >
-                    Remove widget
-                  </Button>
-                </div>
+                </InlineAlert>
               }
             >
               {renderWidget}

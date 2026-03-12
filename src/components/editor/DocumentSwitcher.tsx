@@ -128,6 +128,8 @@ export const DocumentSwitcher: React.FC = () => {
           size="sm"
           onClick={() => setIsOpen((prev) => !prev)}
           title="Switch document"
+          aria-label="Switch document"
+          aria-expanded={isOpen}
           className="px-2"
         >
           <ChevronDown className="w-4 h-4" />
@@ -176,6 +178,7 @@ export const DocumentSwitcher: React.FC = () => {
                   onClick={(e) => handleDelete(e, doc.id)}
                   className="p-1.5 rounded text-neutral-500 dark:text-neutral-textMuted hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors shrink-0"
                   title="Delete document"
+                  aria-label={`Delete "${doc.title || 'Untitled Document'}"`}
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>

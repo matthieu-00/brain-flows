@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Play, Pause, RotateCcw, Plus, Minus } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { useLayoutStore } from '../../store/layoutStore';
@@ -9,133 +9,97 @@ interface TimerWidgetProps {
 }
 
 interface TimerData {
-  minutes: number;
-  seconds: number;
-  isRunning: boolean;
-  totalSeconds: number;
+  /** Wall-clock timestamp (ms) when timer should reach zero. Null when paused. */
+  endAt: number | null;
+  /** Remaining seconds when paused (or initial duration). */
+  remainingSeconds: number;
+  /** The original configured duration so we can reset. */
   originalTime: number;
+}
+
+const DEFAULT_DURATION = 300; // 5 minutes
+
+function getInitial(widget: Widget): { endAt: number | null; remaining: number; original: number } {
+  const d = widget.data as TimerData | undefined;
+  if (!d) return { endAt: null, remaining: DEFAULT_DURATION, original: DEFAULT_DURATION };
+  const remaining = d.endAt ? Math.max(0, Math.round((d.endAt - Date.now()) / 1000)) : (d.remainingSeconds ?? DEFAULT_DURATION);
+  return { endAt: d.endAt ?? null, remaining, original: d.originalTime ?? DEFAULT_DURATION };
 }
 
 const TimerWidget: React.FC<TimerWidgetProps> = ({ widget }) => {
   const { updateWidget } = useLayoutStore();
-  
-  const [minutes, setMinutes] = useState(5);
-  const [seconds, setSeconds] = useState(0);
-  const [isRunning, setIsRunning] = useState(false);
-  const [totalSeconds, setTotalSeconds] = useState(300); // 5 minutes default
+  const initRef = useRef(getInitial(widget));
 
-  // Load saved state
+  const [remaining, setRemaining] = useState(initRef.current.remaining);
+  const [isRunning, setIsRunning] = useState(initRef.current.endAt !== null && initRef.current.remaining > 0);
+  const [originalTime, setOriginalTime] = useState(initRef.current.original);
+
+  const persist = useCallback((data: Partial<TimerData>) => {
+    const current = (widget.data as TimerData) || {};
+    updateWidget(widget.id, { data: { ...current, ...data } });
+  }, [widget.id, updateWidget, widget.data]);
+
+  // Tick effect: derive remaining from wall clock
   useEffect(() => {
-    const savedData = widget.data as TimerData;
-    if (savedData) {
-      setMinutes(savedData.minutes || 5);
-      setSeconds(savedData.seconds || 0);
-      setIsRunning(savedData.isRunning || false);
-      setTotalSeconds(savedData.totalSeconds || 300);
-    }
-  }, [widget.data]);
+    if (!isRunning) return;
 
-  // Save state
-  const saveState = useCallback((data: Partial<TimerData>) => {
-    const currentData = widget.data as TimerData || {};
-    updateWidget(widget.id, {
-      data: { ...currentData, ...data }
-    });
-  }, [widget.id, updateWidget]);
+    const tick = () => {
+      const d = widget.data as TimerData | undefined;
+      if (!d?.endAt) return;
+      const left = Math.max(0, Math.round((d.endAt - Date.now()) / 1000));
+      setRemaining(left);
+      if (left === 0) {
+        setIsRunning(false);
+        persist({ endAt: null, remainingSeconds: 0 });
+        if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification('Timer Finished!', { body: 'Your timer has reached zero.', icon: '/favicon.ico' });
+        }
+      }
+    };
 
-  // Timer effect
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    
-    if (isRunning && totalSeconds > 0) {
-      interval = setInterval(() => {
-        setTotalSeconds(prev => {
-          const newTotal = prev - 1;
-          const newMinutes = Math.floor(newTotal / 60);
-          const newSeconds = newTotal % 60;
-          
-          setMinutes(newMinutes);
-          setSeconds(newSeconds);
-          
-          // Save state
-          saveState({
-            minutes: newMinutes,
-            seconds: newSeconds,
-            totalSeconds: newTotal,
-            isRunning: newTotal > 0
-          });
-          
-          // Timer finished
-          if (newTotal === 0) {
-            setIsRunning(false);
-            // Show notification if supported
-            if ('Notification' in window && Notification.permission === 'granted') {
-              new Notification('Timer Finished!', {
-                body: 'Your timer has reached zero.',
-                icon: '/favicon.ico'
-              });
-            }
-          }
-          
-          return newTotal;
-        });
-      }, 1000);
-    }
-    
-    return () => clearInterval(interval);
-  }, [isRunning, totalSeconds, saveState]);
+    tick();
+    const id = setInterval(tick, 250);
+    return () => clearInterval(id);
+  }, [isRunning, widget.data, persist]);
 
   const toggleTimer = () => {
-    const newRunning = !isRunning;
-    setIsRunning(newRunning);
-    saveState({ isRunning: newRunning });
+    if (isRunning) {
+      // Pause: snapshot remaining seconds
+      const d = widget.data as TimerData | undefined;
+      const left = d?.endAt ? Math.max(0, Math.round((d.endAt - Date.now()) / 1000)) : remaining;
+      setRemaining(left);
+      setIsRunning(false);
+      persist({ endAt: null, remainingSeconds: left });
+    } else {
+      if (remaining <= 0) return;
+      const endAt = Date.now() + remaining * 1000;
+      setIsRunning(true);
+      persist({ endAt, remainingSeconds: remaining, originalTime });
+    }
   };
 
   const resetTimer = () => {
-    const originalTime = (widget.data as TimerData)?.originalTime || 300;
-    const newMinutes = Math.floor(originalTime / 60);
-    const newSeconds = originalTime % 60;
-    
-    setMinutes(newMinutes);
-    setSeconds(newSeconds);
-    setTotalSeconds(originalTime);
+    setRemaining(originalTime);
     setIsRunning(false);
-    
-    saveState({
-      minutes: newMinutes,
-      seconds: newSeconds,
-      totalSeconds: originalTime,
-      isRunning: false
-    });
+    persist({ endAt: null, remainingSeconds: originalTime, originalTime });
   };
 
   const adjustTime = (adjustment: number) => {
     if (isRunning) return;
-    
-    const newTotal = Math.max(0, totalSeconds + adjustment);
-    const newMinutes = Math.floor(newTotal / 60);
-    const newSeconds = newTotal % 60;
-    
-    setMinutes(newMinutes);
-    setSeconds(newSeconds);
-    setTotalSeconds(newTotal);
-    
-    saveState({
-      minutes: newMinutes,
-      seconds: newSeconds,
-      totalSeconds: newTotal,
-      originalTime: newTotal
-    });
+    const newTotal = Math.max(0, remaining + adjustment);
+    setRemaining(newTotal);
+    setOriginalTime(newTotal);
+    persist({ endAt: null, remainingSeconds: newTotal, originalTime: newTotal });
   };
 
-  const formatTime = (mins: number, secs: number) => {
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
+  const minutes = Math.floor(remaining / 60);
+  const seconds = remaining % 60;
 
-  const getProgressPercentage = () => {
-    const originalTime = (widget.data as TimerData)?.originalTime || 300;
-    return ((originalTime - totalSeconds) / originalTime) * 100;
-  };
+  const formatTime = (mins: number, secs: number) =>
+    `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+  const getProgressPercentage = () =>
+    originalTime > 0 ? ((originalTime - remaining) / originalTime) * 100 : 0;
 
   return (
     <div className="flex flex-col items-center justify-center h-full space-y-6">
@@ -146,7 +110,7 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ widget }) => {
               cx="60"
               cy="60"
               r="50"
-              stroke="#E5E7EB"
+              stroke="var(--color-border-default)"
               strokeWidth="8"
               fill="none"
             />
@@ -154,7 +118,7 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ widget }) => {
               cx="60"
               cy="60"
               r="50"
-              stroke="#2D5A3D"
+              stroke="var(--color-accent)"
               strokeWidth="8"
               fill="none"
               strokeDasharray={`${2 * Math.PI * 50}`}
