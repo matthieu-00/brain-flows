@@ -139,7 +139,7 @@ export const Header: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowNewDocDropdown((prev) => !prev)}
-                  className="px-1.5 py-1.5 flex items-center bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700 text-neutral-900 dark:text-neutral-text transition-colors"
+                  className="px-1.5 py-1.5 flex items-center bg-sage-100 dark:bg-sage-900/30 hover:bg-sage-200 dark:hover:bg-sage-900/50 text-neutral-900 dark:text-neutral-text transition-colors"
                   title="Format for new document"
                   aria-label="Choose format for new document"
                   aria-expanded={showNewDocDropdown}
@@ -187,7 +187,7 @@ export const Header: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowSaveDropdown((prev) => !prev)}
-                  className="px-1.5 py-1.5 flex items-center bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-700 text-neutral-900 dark:text-neutral-text transition-colors"
+                  className="px-1.5 py-1.5 flex items-center bg-sage-100 dark:bg-sage-900/30 hover:bg-sage-200 dark:hover:bg-sage-900/50 text-neutral-900 dark:text-neutral-text transition-colors"
                   title="Export options"
                   aria-label="Export options"
                   aria-expanded={showSaveDropdown}
