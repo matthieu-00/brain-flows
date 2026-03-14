@@ -146,6 +146,14 @@
 - [ ] Add TypeScript strict mode
 - [ ] Improve accessibility (ARIA labels, keyboard navigation)
 
+### AI Agent Platform (Backend / OpenClaw)
+- [ ] Real OpenClaw account linking and token lifecycle
+- [ ] Persistent agent runs and resumable job history
+- [ ] Real notification delivery beyond local toasts
+- [ ] Citation/provenance model for document insertions
+- [ ] Server-side document action pipeline and permission boundaries
+- [ ] Multi-provider abstraction once OpenClaw is live
+
 ## Library Attribution
 
 All integrated libraries include proper attribution comments linking to original repositories:
@@ -193,6 +201,10 @@ All integrated libraries include proper attribution comments linking to original
 - Styling/UX: responsive layout, dark/light theme, loading states, animations
 - Performance: code splitting, bundle size captured, re-render optimizations in place
 
+**AI Agent Prototype**: ✅ Complete (frontend-native)
+- Dedicated agent panel (left/right), chat modal (Ctrl/Cmd+J), document-aware suggestions with apply/reject, toast notifications, OpenClaw connection UI in Settings, provider interface for future backend.
+
 **Next Priorities**:
 1. Phase 5: Future Enhancements (multi-doc, export, collaboration, etc.)
-2. Optional: further bundle splitting (manualChunks) if main chunk size is a concern
+2. AI Agent Platform: backend, real OpenClaw linking, persistent runs, citations (see Phase 5 AI Agent Platform)
+3. Optional: further bundle splitting (manualChunks) if main chunk size is a concern

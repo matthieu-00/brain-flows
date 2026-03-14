@@ -13,11 +13,17 @@ import {
   Sun,
   Moon,
   Monitor,
+  Bot,
+  MessageSquare,
+  PanelLeftClose,
+  PanelRightClose,
 } from 'lucide-react';
 import { ExportFormat } from '../../types';
 import { useAuthStore } from '../../store/authStore';
 import { useDocumentStore } from '../../store/documentStore';
 import { useLayoutStore } from '../../store/layoutStore';
+import { useAgentStore } from '../../store/agentStore';
+import type { AgentPanelSide } from '../../store/agentStore';
 import { Button } from '../ui/Button';
 import { SettingsModal } from './SettingsModal';
 import { NewDocumentPrompt } from '../editor/NewDocumentPrompt';
@@ -31,10 +37,13 @@ export const Header: React.FC = () => {
   const [showNewDocPrompt, setShowNewDocPrompt] = useState(false);
   const [showSaveDropdown, setShowSaveDropdown] = useState(false);
   const [showNewDocDropdown, setShowNewDocDropdown] = useState(false);
+  const [showAgentDropdown, setShowAgentDropdown] = useState(false);
   const [pendingNewDocFormat, setPendingNewDocFormat] = useState<ExportFormat | null>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const saveDropdownRef = useRef<HTMLDivElement>(null);
   const newDocDropdownRef = useRef<HTMLDivElement>(null);
+  const agentDropdownRef = useRef<HTMLDivElement>(null);
+  const { agentPanelSide, setAgentPanelSide, openAgentChat } = useAgentStore();
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -47,10 +56,13 @@ export const Header: React.FC = () => {
       if (showNewDocDropdown && newDocDropdownRef.current && !newDocDropdownRef.current.contains(e.target as Node)) {
         setShowNewDocDropdown(false);
       }
+      if (showAgentDropdown && agentDropdownRef.current && !agentDropdownRef.current.contains(e.target as Node)) {
+        setShowAgentDropdown(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showUserMenu, showSaveDropdown, showNewDocDropdown]);
+  }, [showUserMenu, showSaveDropdown, showNewDocDropdown, showAgentDropdown]);
 
   const docExportFormat = currentDocument?.exportFormat ?? settings.defaultFileType ?? settings.exportFormat;
 
@@ -233,6 +245,64 @@ export const Header: React.FC = () => {
                       {format === 'md' ? 'Markdown' : format === 'txt' ? 'Plain text' : format === 'docx' ? 'Word document' : 'PDF'}
                     </button>
                   ))}
+                </motion.div>
+              )}
+            </div>
+
+            {/* AI Agent */}
+            <div className="relative" ref={agentDropdownRef}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAgentDropdown((prev) => !prev)}
+                title="AI Agent"
+                aria-label="AI Agent"
+                aria-expanded={showAgentDropdown}
+              >
+                <Bot className="w-4 h-4" />
+              </Button>
+              {showAgentDropdown && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: -8 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  className="absolute right-0 mt-2 w-52 bg-white dark:bg-neutral-surface rounded-lg shadow-lg border border-gray-200 dark:border-neutral-700 py-1 z-50"
+                >
+                  <button
+                    type="button"
+                    onClick={() => { openAgentChat(); setShowAgentDropdown(false); }}
+                    className="w-full px-3 py-2 text-left text-sm text-neutral-900 dark:text-neutral-text hover:bg-sage-100 dark:hover:bg-neutral-700 flex items-center gap-2"
+                  >
+                    <MessageSquare className="w-4 h-4 opacity-70" />
+                    Open chat
+                  </button>
+                  <div className="my-1 border-t border-neutral-200 dark:border-neutral-700" />
+                  <div className="px-3 py-1.5 text-xs font-medium text-neutral-500 dark:text-neutral-textMuted">
+                    Agent panel
+                  </div>
+                  {(['left', 'right'] as AgentPanelSide[]).map((side) => (
+                    <button
+                      key={side}
+                      type="button"
+                      onClick={() => { setAgentPanelSide(agentPanelSide === side ? null : side); setShowAgentDropdown(false); }}
+                      className={`w-full px-3 py-2 text-left text-sm flex items-center gap-2 ${
+                        agentPanelSide === side
+                          ? 'text-sage-800 dark:text-sage-400 font-medium bg-sage-50 dark:bg-sage-900/30'
+                          : 'text-neutral-900 dark:text-neutral-text hover:bg-sage-100 dark:hover:bg-neutral-700'
+                      }`}
+                    >
+                      {side === 'left' ? <PanelLeftClose className="w-4 h-4" /> : <PanelRightClose className="w-4 h-4" />}
+                      Panel on {side}
+                    </button>
+                  ))}
+                  {agentPanelSide && (
+                    <button
+                      type="button"
+                      onClick={() => { setAgentPanelSide(null); setShowAgentDropdown(false); }}
+                      className="w-full px-3 py-2 text-left text-sm text-neutral-600 dark:text-neutral-textMuted hover:bg-sage-100 dark:hover:bg-neutral-700"
+                    >
+                      Hide panel
+                    </button>
+                  )}
                 </motion.div>
               )}
             </div>

@@ -9,7 +9,6 @@ import { useLayoutStore } from '../../store/layoutStore';
 import { WidgetType, WidgetZone } from '../../types';
 import { widgetConfig, widgetZones } from '../../constants/widgets';
 import { getOpenAIKeyError, getWeatherKeyError } from '../../utils/apiKeyValidation';
-import { KeyboardShortcutsHelp } from '../ui/KeyboardShortcutsHelp';
 
 type ManageTab = 'add' | 'remove';
 
@@ -422,7 +421,9 @@ export const WidgetManagementModal: React.FC = () => {
             </Button>
           </div>
 
-          <KeyboardShortcutsHelp />
+          <p className="text-xs text-neutral-500 dark:text-neutral-textMuted text-center pt-2 border-t border-neutral-200 dark:border-neutral-700">
+            See Settings → Keyboard shortcuts to view or customize shortcuts.
+          </p>
         </div>
       </Modal>
 

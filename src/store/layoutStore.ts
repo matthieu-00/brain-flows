@@ -87,6 +87,7 @@ const defaultSettings: AppSettings = {
   editorTextColor: '#2c2c2c',
   apiKeys: {},
   profile: {},
+  keyboardShortcuts: {},
 };
 
 export const useLayoutStore = create<LayoutState>()(
@@ -331,6 +332,7 @@ export const useLayoutStore = create<LayoutState>()(
           const s = merged.settings as Record<string, unknown>;
           if (!('defaultFileType' in s)) s.defaultFileType = 'md';
           if (!('profile' in s)) s.profile = {};
+          if (!('keyboardShortcuts' in s)) s.keyboardShortcuts = {};
         }
         return merged;
       },

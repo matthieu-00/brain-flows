@@ -7,8 +7,9 @@ import { useLayoutStore } from '../../store/layoutStore';
 import { useUIStore } from '../../store/uiStore';
 import { AppSettings } from '../../types';
 import { getOpenAIKeyError, getWeatherKeyError } from '../../utils/apiKeyValidation';
-import { KeyboardShortcutsHelp } from '../ui/KeyboardShortcutsHelp';
-import { User, Camera, ExternalLink } from 'lucide-react';
+import { KeyboardShortcutsSection } from '../ui/KeyboardShortcutsSection';
+import { User, Camera, ExternalLink, Bot } from 'lucide-react';
+import { useAgentStore } from '../../store/agentStore';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ interface SettingsModalProps {
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const { settings, updateSettings, widgets } = useLayoutStore();
   const openWidgetModal = useUIStore((state) => state.openWidgetModal);
+  const { connectionStatus, setConnectionStatus } = useAgentStore();
   const [openaiKey, setOpenaiKey] = useState(settings.apiKeys?.openai || '');
   const [weatherKey, setWeatherKey] = useState(settings.apiKeys?.weather || '');
   const [keyErrors, setKeyErrors] = useState<{ openai?: string; weather?: string }>({});
@@ -128,7 +130,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     <Modal isOpen={isOpen} onClose={onClose} title="Settings" size="lg">
       <div className="space-y-4">
         {/* Profile Section */}
-        <CollapsibleSection title="Profile" defaultOpen={true}>
+        <CollapsibleSection title="Profile" defaultOpen={false}>
           <div className="space-y-4">
             <div className="flex items-center gap-4">
               <div className="relative">
@@ -220,7 +222,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         </CollapsibleSection>
 
         {/* Text Editor Settings */}
-        <CollapsibleSection title="Text editor settings" defaultOpen={true}>
+        <CollapsibleSection title="Text editor settings" defaultOpen={false}>
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-neutral-900 dark:text-neutral-text mb-2">
@@ -342,8 +344,53 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
           </div>
         </CollapsibleSection>
 
+        {/* Agents / Integrations */}
+        <CollapsibleSection title="Agents" defaultOpen={false}>
+          <div className="space-y-4">
+            <p className="text-sm text-neutral-600 dark:text-neutral-textMuted">
+              Connect an AI agent to assist with writing, research, and document suggestions.
+            </p>
+            <div className="rounded-lg border border-neutral-200 dark:border-neutral-700 p-4 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-sage-100 dark:bg-sage-900/30 flex items-center justify-center">
+                  <Bot className="w-5 h-5 text-sage-700 dark:text-sage-400" />
+                </div>
+                <div>
+                  <p className="font-medium text-neutral-900 dark:text-neutral-text">OpenClaw</p>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-textMuted">
+                    {connectionStatus === 'connected'
+                      ? 'Connected (prototype mode)'
+                      : connectionStatus === 'error'
+                        ? 'Connection error'
+                        : 'Not connected'}
+                  </p>
+                </div>
+              </div>
+              {connectionStatus === 'connected' ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setConnectionStatus('disconnected')}
+                >
+                  Disconnect
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  onClick={() => setConnectionStatus('connected')}
+                >
+                  Connect (prototype)
+                </Button>
+              )}
+            </div>
+            <p className="text-xs text-neutral-500 dark:text-neutral-textMuted">
+              In prototype mode, the agent runs locally with mock responses. Full OpenClaw account linking will be available when the backend is set up.
+            </p>
+          </div>
+        </CollapsibleSection>
+
         {/* Widget Management - redirect to canonical modal */}
-        <CollapsibleSection title="Widgets" defaultOpen={true}>
+        <CollapsibleSection title="Widgets" defaultOpen={false}>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <p className="text-sm text-neutral-600 dark:text-neutral-textMuted">
@@ -408,6 +455,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
           </div>
         </CollapsibleSection>
 
+        {/* Keyboard Shortcuts */}
+        <CollapsibleSection title="Keyboard shortcuts" defaultOpen={false}>
+          <KeyboardShortcutsSection />
+        </CollapsibleSection>
+
         {/* Action Buttons */}
         <div className="flex space-x-3 pt-2">
           <Button onClick={handleSaveSettings} className="flex-1">
@@ -417,8 +469,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             Cancel
           </Button>
         </div>
-
-        <KeyboardShortcutsHelp />
       </div>
     </Modal>
   );

@@ -2,12 +2,15 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { PanelGroup, Panel, PanelResizeHandle, ImperativePanelGroupHandle } from 'react-resizable-panels';
 import { useLayoutStore } from '../../store/layoutStore';
+import { useAgentStore } from '../../store/agentStore';
 import { RichTextEditor } from '../editor/RichTextEditor';
 import { WidgetZone } from './WidgetZone';
+import { AgentPanel } from '../agent/AgentPanel';
 
 export const MainLayout: React.FC = () => {
   const { distractionFreeMode, layoutConfig, handlePanelResize } = useLayoutStore();
-  
+  const agentPanelSide = useAgentStore((s) => s.agentPanelSide);
+
   // Refs for PanelGroups to control collapsing
   const verticalGroupRef = React.useRef<ImperativePanelGroupHandle>(null);
   const horizontalGroupRef = React.useRef<ImperativePanelGroupHandle>(null);
@@ -61,13 +64,17 @@ export const MainLayout: React.FC = () => {
                 handlePanelResize('left', size);
               }}
             >
-              <WidgetZone zone="left" panelGroupRef={horizontalGroupRef} />
+              {agentPanelSide === 'left' ? (
+                <AgentPanel zone="left" panelGroupRef={horizontalGroupRef} />
+              ) : (
+                <WidgetZone zone="left" panelGroupRef={horizontalGroupRef} />
+              )}
             </Panel>
 
             <PanelResizeHandle className="w-1 bg-neutral-300 dark:bg-neutral-700 hover:bg-sage-700 transition-colors" />
 
-            {/* Central Editor */}
-            <Panel defaultSize={50} minSize={25}>
+            {/* Central Editor - z-30 so editor options dropdown appears above side panels (z-20) */}
+            <Panel defaultSize={50} minSize={25} className="relative z-30">
               <div className="h-full flex flex-col min-h-0 p-2 sm:p-4 min-w-0">
                 <RichTextEditor className="flex-1 min-h-0 w-full shadow-lg" />
               </div>
@@ -87,7 +94,11 @@ export const MainLayout: React.FC = () => {
                 handlePanelResize('right', size);
               }}
             >
-              <WidgetZone zone="right" panelGroupRef={horizontalGroupRef} />
+              {agentPanelSide === 'right' ? (
+                <AgentPanel zone="right" panelGroupRef={horizontalGroupRef} />
+              ) : (
+                <WidgetZone zone="right" panelGroupRef={horizontalGroupRef} />
+              )}
             </Panel>
           </PanelGroup>
         </Panel>

@@ -79,6 +79,14 @@ export interface UserProfile {
   avatar?: string; // data URL or base64
 }
 
+export type ShortcutId =
+  | 'save'
+  | 'export'
+  | 'distractionFree'
+  | 'agentChat'
+  | 'widgetAdd'
+  | 'widgetRemove';
+
 export interface AppSettings {
   theme: 'light' | 'dark' | 'system';
   autoSaveInterval: number; // seconds
@@ -93,6 +101,8 @@ export interface AppSettings {
     weather?: string;
   };
   profile?: UserProfile;
+  /** User overrides for keyboard shortcuts. Combo format: "Ctrl+S", "Alt++", "Ctrl+Shift+Enter". */
+  keyboardShortcuts?: Partial<Record<ShortcutId, string>>;
 }
 
 export interface StickyNote {

@@ -9,6 +9,8 @@ import { Header } from './components/layout/Header';
 import { MainLayout } from './components/layout/MainLayout';
 import { OfflineBanner } from './components/OfflineBanner';
 import { WidgetManagementModal } from './components/modals/WidgetManagementModal';
+import { AgentChatModal } from './components/agent/AgentChatModal';
+import { ToastContainer } from './components/ui/Toast';
 
 // Returns true if the hex color is dark (low luminance, unreadable on dark bg)
 function isDarkColor(hex: string): boolean {
@@ -94,6 +96,8 @@ function App() {
       <Header />
       <MainLayout />
       <WidgetManagementModal />
+      <AgentChatModal />
+      <ToastContainer />
     </div>
   );
 }

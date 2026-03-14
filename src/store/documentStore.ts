@@ -6,12 +6,24 @@ import { exportToPdf } from '../utils/exportPdf';
 import { htmlToMarkdown } from '../utils/exportMarkdown';
 import { htmlToDocxBlob } from '../utils/exportDocx';
 
+export interface DocumentSelection {
+  from: number;
+  to: number;
+  text: string;
+}
+
+export type EditorReplacer = (from: number, to: number, replacement: string) => void;
+
 interface DocumentState {
   currentDocument: Document | null;
   documents: Document[];
   isAutoSaveEnabled: boolean;
   lastSaved: Date | null;
   hasUnsavedChanges: boolean;
+  /** Current editor selection (ProseMirror offsets); set by RichTextEditor */
+  selection: DocumentSelection | null;
+  /** Replacer function registered by the editor for applying suggestions */
+  editorReplacer: EditorReplacer | null;
   createDocument: (title?: string, exportFormat?: ExportFormat) => Document;
   updateDocument: (id: string, updates: Partial<Document>) => void;
   deleteDocument: (id: string) => void;
@@ -19,6 +31,11 @@ interface DocumentState {
   saveDocument: () => void;
   autoSave: () => void;
   exportDocument: (format: ExportFormat) => void;
+  setSelection: (from: number, to: number, text: string) => void;
+  clearSelection: () => void;
+  setEditorReplacer: (replacer: EditorReplacer | null) => void;
+  /** Apply a replacement in the editor at the given range. No-op if no editor registered. */
+  replaceRange: (from: number, to: number, replacement: string) => void;
 }
 
 export const useDocumentStore = create<DocumentState>()(
@@ -29,6 +46,17 @@ export const useDocumentStore = create<DocumentState>()(
       isAutoSaveEnabled: true,
       lastSaved: null,
       hasUnsavedChanges: false,
+      selection: null,
+      editorReplacer: null,
+
+      setSelection: (from, to, text) =>
+        set({ selection: { from, to, text } }),
+      clearSelection: () => set({ selection: null }),
+      setEditorReplacer: (replacer) => set({ editorReplacer: replacer }),
+      replaceRange: (from, to, replacement) => {
+        const { editorReplacer } = get();
+        if (editorReplacer) editorReplacer(from, to, replacement);
+      },
 
       createDocument: (title = 'Untitled Document', exportFormat?: ExportFormat) => {
         const newDoc: Document = {

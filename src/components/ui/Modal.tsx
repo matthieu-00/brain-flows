@@ -9,6 +9,8 @@ interface ModalProps {
   title?: string;
   children: React.ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl';
+  /** When set, focus this element when the modal opens instead of the first focusable (e.g. close button). */
+  initialFocusRef?: React.RefObject<HTMLElement | null>;
 }
 
 const FOCUSABLE_SELECTOR =
@@ -20,6 +22,7 @@ export const Modal: React.FC<ModalProps> = ({
   title,
   children,
   size = 'md',
+  initialFocusRef,
 }) => {
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
@@ -49,8 +52,12 @@ export const Modal: React.FC<ModalProps> = ({
       document.body.style.overflow = 'hidden';
 
       requestAnimationFrame(() => {
-        const first = dialogRef.current?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
-        first?.focus();
+        const dialog = dialogRef.current;
+        if (!dialog) return;
+        // Only move focus when it's not already inside the dialog (e.g. user typing in an input).
+        if (dialog.contains(document.activeElement)) return;
+        const target = initialFocusRef?.current ?? dialog.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
+        target?.focus();
       });
     }
 
@@ -81,6 +88,7 @@ export const Modal: React.FC<ModalProps> = ({
           role="dialog"
           aria-modal="true"
           aria-label={title}
+          data-modal="true"
         >
           <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0 relative z-10">
             {/* Backdrop */}
