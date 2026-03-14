@@ -68,7 +68,7 @@ export const MainLayout: React.FC = () => {
 
             {/* Central Editor */}
             <Panel defaultSize={50} minSize={25}>
-              <div className="h-full flex flex-col min-h-0 p-4">
+              <div className="h-full flex flex-col min-h-0 p-2 sm:p-4 min-w-0">
                 <RichTextEditor className="flex-1 min-h-0 w-full shadow-lg" />
               </div>
             </Panel>

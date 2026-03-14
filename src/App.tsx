@@ -3,9 +3,11 @@ import { useAuthStore } from './store/authStore';
 import { useDocumentStore } from './store/documentStore';
 import { useLayoutStore } from './store/layoutStore';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useOnlineStatus } from './hooks/useOnlineStatus';
 import LandingPage from './components/landing/LandingPage';
 import { Header } from './components/layout/Header';
 import { MainLayout } from './components/layout/MainLayout';
+import { OfflineBanner } from './components/OfflineBanner';
 import { WidgetManagementModal } from './components/modals/WidgetManagementModal';
 
 // Returns true if the hex color is dark (low luminance, unreadable on dark bg)
@@ -23,7 +25,8 @@ function App() {
   const { isAuthenticated } = useAuthStore();
   const { currentDocument, createDocument } = useDocumentStore();
   const { settings, updateSettings } = useLayoutStore();
-  
+  const isOnline = useOnlineStatus();
+
   // Enable keyboard shortcuts
   useKeyboardShortcuts();
 
@@ -87,6 +90,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-cream-50 dark:bg-neutral-950">
+      {!isOnline && <OfflineBanner />}
       <Header />
       <MainLayout />
       <WidgetManagementModal />

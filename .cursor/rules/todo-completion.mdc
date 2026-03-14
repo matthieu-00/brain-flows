@@ -1,0 +1,16 @@
+---
+description: When completing a task from TODO.md, mark the item and section in TODO.md as done.
+alwaysApply: true
+---
+
+# TODO completion tracking
+
+When you implement or complete a task that corresponds to an item in [TODO.md](TODO.md):
+
+1. **Update TODO.md in the same change set** (same edit/commit): change the relevant `- [ ]` to `- [x]`.
+2. **When every item in a subsection is done**, add ✅ to that subsection header (e.g. `### 4.1 Data Persistence Testing ✅`).
+3. **When a phase has all subsections complete**, update the phase header emoji to ✅ (e.g. `## Phase 4: Testing and Refinements ✅`).
+4. Do this as part of the work that completes the task; do not wait for the user to request it.
+
+Example: after implementing "Add error boundaries for external libraries", edit TODO.md and change
+`- [ ] Add error boundaries for external libraries` to `- [x] Add error boundaries for external libraries`.

@@ -172,8 +172,8 @@ const WidgetContainer: React.FC<WidgetContainerProps> = ({
           className={`p-4 ${sizingSpec.overflowBehavior === 'scroll' ? 'overflow-y-auto' : 'overflow-hidden'}`}
         >
           <Suspense fallback={
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sage-900"></div>
+            <div className="flex items-center justify-center py-12" role="status" aria-label="Loading widget">
+              <div className="animate-spin rounded-full h-8 w-8 border-2 border-sage-200 dark:border-sage-700 border-t-sage-700 dark:border-t-sage-400"></div>
               <span className="ml-3 text-sm text-neutral-600 dark:text-neutral-400">Loading widget...</span>
             </div>
           }>
