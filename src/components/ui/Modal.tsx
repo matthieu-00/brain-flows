@@ -96,7 +96,7 @@ export const Modal: React.FC<ModalProps> = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-neutral-900 bg-opacity-40 transition-opacity z-0"
+              className="fixed inset-0 bg-neutral-900/40 backdrop-blur-sm transition-opacity z-0"
               onClick={onClose}
               aria-hidden="true"
             />
@@ -112,7 +112,7 @@ export const Modal: React.FC<ModalProps> = ({
               {/* Header */}
               {title && (
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-neutral-text">
+                  <h2 className="font-display text-lg font-semibold text-neutral-900 dark:text-neutral-text">
                     {title}
                   </h2>
                   <Button

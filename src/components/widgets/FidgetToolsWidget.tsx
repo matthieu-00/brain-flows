@@ -71,7 +71,7 @@ const FidgetToolsWidget: React.FC<FidgetToolsWidgetProps> = ({ widget }) => {
           >
             <div className="relative">
               {/* Center circle */}
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-gray-800 rounded-full z-10"></div>
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-neutral-900 dark:bg-neutral-text rounded-full z-10"></div>
               
               {/* Spinner arms */}
               <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-6 h-6 bg-blue-500 rounded-full"></div>
@@ -80,7 +80,7 @@ const FidgetToolsWidget: React.FC<FidgetToolsWidgetProps> = ({ widget }) => {
               <div className="absolute top-1/2 right-0 transform -translate-y-1/2 w-6 h-6 bg-yellow-500 rounded-full"></div>
             </div>
           </motion.div>
-          <p className="text-sm text-gray-600 dark:text-neutral-textMuted mt-4">Click to spin!</p>
+          <p className="text-sm text-neutral-600 dark:text-neutral-textMuted mt-4">Click to spin!</p>
         </div>
       )}
 
@@ -97,10 +97,10 @@ const FidgetToolsWidget: React.FC<FidgetToolsWidgetProps> = ({ widget }) => {
           </motion.button>
           
           <div className="mt-4 space-y-2">
-            <div className="text-2xl font-bold text-gray-800 dark:text-neutral-text">
+            <div className="text-2xl font-bold text-neutral-900 dark:text-neutral-text">
               {clickCount}
             </div>
-            <div className="text-sm text-gray-600 dark:text-neutral-textMuted">
+            <div className="text-sm text-neutral-600 dark:text-neutral-textMuted">
               clicks
             </div>
             <Button
@@ -124,7 +124,7 @@ const FidgetToolsWidget: React.FC<FidgetToolsWidgetProps> = ({ widget }) => {
                 key={i}
                 className={`w-8 h-8 rounded-full ${
                   poppedBubbles.has(i) 
-                    ? 'bg-gray-300' 
+                    ? 'bg-neutral-300 dark:bg-neutral-600' 
                     : 'bg-gradient-to-br from-blue-200 to-blue-400 shadow-inner'
                 } transition-colors`}
                 whileTap={{ scale: 0.8 }}
@@ -137,7 +137,7 @@ const FidgetToolsWidget: React.FC<FidgetToolsWidgetProps> = ({ widget }) => {
           </div>
           
           <div className="text-center mt-4">
-            <p className="text-sm text-gray-600 dark:text-neutral-textMuted">
+            <p className="text-sm text-neutral-600 dark:text-neutral-textMuted">
               Popped: {poppedBubbles.size}/24 bubbles
             </p>
             {poppedBubbles.size === 24 && (

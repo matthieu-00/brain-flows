@@ -120,7 +120,7 @@ const StickyNotesWidget: React.FC<StickyNotesWidgetProps> = ({ widget }) => {
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="absolute top-full right-0 mt-2 p-2 bg-white dark:bg-neutral-surface border border-gray-300 dark:border-neutral-700 rounded-lg shadow-lg z-20"
+                className="absolute top-full right-0 mt-2 p-2 bg-white dark:bg-neutral-surface border border-neutral-300 dark:border-neutral-700 rounded-lg shadow-lg z-20"
               >
                 <div className="grid grid-cols-4 gap-1">
                   {colors.map(color => (
@@ -131,7 +131,7 @@ const StickyNotesWidget: React.FC<StickyNotesWidgetProps> = ({ widget }) => {
                         setShowColorPicker(false);
                       }}
                       className={`w-6 h-6 rounded border-2 ${
-                        selectedColor === color ? 'border-gray-800' : 'border-gray-300'
+                        selectedColor === color ? 'border-neutral-800' : 'border-neutral-300'
                       }`}
                       style={{ backgroundColor: color }}
                     />
@@ -156,7 +156,7 @@ const StickyNotesWidget: React.FC<StickyNotesWidgetProps> = ({ widget }) => {
       {/* Notes Container */}
       <div 
         ref={containerRef}
-        className="relative aspect-[4/3] bg-gray-50 dark:bg-neutral-700 rounded-lg border-2 border-dashed border-gray-300 dark:border-neutral-700 overflow-hidden"
+        className="relative aspect-[4/3] bg-neutral-50 dark:bg-neutral-700 rounded-lg border-2 border-dashed border-neutral-300 dark:border-neutral-700 overflow-hidden"
       >
         {notes.length === 0 ? (
           <EmptyState
@@ -181,7 +181,7 @@ const StickyNotesWidget: React.FC<StickyNotesWidgetProps> = ({ widget }) => {
       </div>
 
       {/* Notes Count */}
-      <div className="text-xs text-gray-500 dark:text-neutral-textMuted text-center">
+      <div className="text-xs text-neutral-500 dark:text-neutral-textMuted text-center">
         {notes.length} {notes.length === 1 ? 'note' : 'notes'}
       </div>
     </div>

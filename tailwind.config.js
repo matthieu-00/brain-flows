@@ -81,6 +81,10 @@ export default {
         normal: 'var(--duration-normal)',
         slow: 'var(--duration-slow)',
       },
+      fontFamily: {
+        display: ['"Instrument Serif"', 'Georgia', 'serif'],
+        body: ['"DM Sans"', 'system-ui', 'sans-serif'],
+      },
       transitionTimingFunction: {
         default: 'var(--easing-default)',
       },

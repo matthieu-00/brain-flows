@@ -18,13 +18,13 @@ export const Button: React.FC<ButtonProps> = ({
   disabled,
   ...props
 }) => {
-  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2';
+  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-neutral-950';
   
   const variantClasses = {
     primary: 'bg-sage-900 dark:bg-sage-600 text-white hover:bg-sage-700 dark:hover:bg-sage-500 focus:ring-sage-700 dark:focus:ring-sage-500 shadow-sm',
-    secondary: 'bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-text hover:bg-neutral-300 dark:hover:bg-neutral-700 focus:ring-sage-700 shadow-sm',
-    outline: 'border-2 border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-neutral-text hover:border-sage-700 hover:bg-sage-100 dark:hover:bg-neutral-800 focus:ring-sage-700',
-    ghost: 'text-neutral-600 dark:text-neutral-textMuted hover:text-neutral-900 dark:hover:text-neutral-text hover:bg-sage-100 dark:hover:bg-neutral-800 focus:ring-sage-700',
+    secondary: 'bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-text hover:bg-neutral-300 dark:hover:bg-neutral-700 focus:ring-sage-700 dark:focus:ring-sage-500 shadow-sm',
+    outline: 'border-2 border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-neutral-text hover:border-sage-700 hover:bg-sage-100 dark:hover:bg-neutral-800 focus:ring-sage-700 dark:focus:ring-sage-500',
+    ghost: 'text-neutral-600 dark:text-neutral-textMuted hover:text-neutral-900 dark:hover:text-neutral-text hover:bg-sage-100 dark:hover:bg-neutral-800 focus:ring-sage-700 dark:focus:ring-sage-500',
     danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 shadow-sm',
   };
 
@@ -35,11 +35,12 @@ export const Button: React.FC<ButtonProps> = ({
   };
 
   const isDisabled = disabled || isLoading;
+  const hasScale = variant === 'primary' || variant === 'danger';
 
   return (
     <motion.button
-      whileHover={!isDisabled ? { scale: 1.02 } : {}}
-      whileTap={!isDisabled ? { scale: 0.98 } : {}}
+      whileHover={!isDisabled && hasScale ? { scale: 1.02 } : undefined}
+      whileTap={!isDisabled && hasScale ? { scale: 0.98 } : undefined}
       className={clsx(
         baseClasses,
         variantClasses[variant],

@@ -126,7 +126,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           </Button>
 
           <div className="text-center">
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-neutral-600 dark:text-neutral-textMuted">
               {isLogin ? "Don't have an account?" : 'Already have an account?'}
             </span>
             <Button
@@ -134,7 +134,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               variant="ghost"
               size="sm"
               onClick={switchMode}
-              className="ml-1 p-0 h-auto font-medium text-blue-600 hover:text-blue-700"
+              className="ml-1 p-0 h-auto font-medium text-sage-700 hover:text-sage-900 dark:text-sage-400 dark:hover:text-sage-200"
             >
               {isLogin ? 'Sign up' : 'Sign in'}
             </Button>

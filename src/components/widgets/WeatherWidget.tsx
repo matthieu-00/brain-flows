@@ -143,7 +143,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ widget }) => {
       case 'cloudy':
       case 'partly-cloudy':
       default:
-        return <Cloud className="w-8 h-8 text-gray-500 dark:text-neutral-textMuted" />;
+        return <Cloud className="w-8 h-8 text-neutral-500 dark:text-neutral-textMuted" />;
     }
   };
 
@@ -164,7 +164,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ widget }) => {
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             placeholder="Enter city name..."
-            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-text focus:outline-none focus:ring-2 focus:ring-sage-700"
           />
           <Button
             type="submit"
@@ -192,7 +192,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ widget }) => {
           Use Current Location
         </Button>
         {!settings.apiKeys?.weather && (
-          <p className="text-xs text-gray-500 dark:text-neutral-textMuted">
+          <p className="text-xs text-neutral-500 dark:text-neutral-textMuted">
             Add a Weather API key in Settings when real API integration is enabled.
           </p>
         )}
@@ -216,11 +216,11 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ widget }) => {
       )}
 
       {weatherData ? (
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4">
+        <div className="bg-gradient-to-br from-sage-100 to-cream-100 dark:from-neutral-800 dark:to-neutral-700 rounded-lg p-4">
           <div className="text-center space-y-3">
             <div className="flex items-center justify-center space-x-2">
-              <MapPin className="w-4 h-4 text-gray-600" />
-              <span className="text-sm font-medium text-gray-700 dark:text-neutral-textMuted">
+              <MapPin className="w-4 h-4 text-neutral-600 dark:text-neutral-textMuted" />
+              <span className="text-sm font-medium text-neutral-700 dark:text-neutral-textMuted">
                 {weatherData.location}
               </span>
             </div>
@@ -228,33 +228,33 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ widget }) => {
             <div className="flex items-center justify-center space-x-4">
               {getWeatherIcon(weatherData.icon)}
               <div>
-                <div className="text-3xl font-bold text-gray-800 dark:text-neutral-text">
+                <div className="text-3xl font-bold text-neutral-900 dark:text-neutral-text">
                   {weatherData.temperature}°C
                 </div>
-                <div className="text-sm text-gray-600 dark:text-neutral-textMuted">
+                <div className="text-sm text-neutral-600 dark:text-neutral-textMuted">
                   {weatherData.condition}
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 pt-3 border-t border-blue-200">
+            <div className="grid grid-cols-2 gap-4 pt-3 border-t border-sage-200 dark:border-neutral-600">
               <div className="text-center">
-                <div className="text-lg font-semibold text-gray-800">
+                <div className="text-lg font-semibold text-neutral-900 dark:text-neutral-text">
                   {weatherData.humidity}%
                 </div>
-                <div className="text-xs text-gray-600 dark:text-neutral-textMuted">Humidity</div>
+                <div className="text-xs text-neutral-600 dark:text-neutral-textMuted">Humidity</div>
               </div>
               <div className="text-center">
-                <div className="text-lg font-semibold text-gray-800">
+                <div className="text-lg font-semibold text-neutral-900 dark:text-neutral-text">
                   {weatherData.windSpeed} km/h
                 </div>
-                <div className="text-xs text-gray-600 dark:text-neutral-textMuted">Wind Speed</div>
+                <div className="text-xs text-neutral-600 dark:text-neutral-textMuted">Wind Speed</div>
               </div>
             </div>
           </div>
         </div>
       ) : (
-        <div className="text-center py-8 text-gray-500 dark:text-neutral-textMuted">
+        <div className="text-center py-8 text-neutral-500 dark:text-neutral-textMuted">
           <div className="text-4xl mb-2">🌤️</div>
           <p className="text-sm">No weather data yet</p>
           <p className="text-xs">Enter a city above to get started</p>
@@ -263,7 +263,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ widget }) => {
 
       {/* Popular Cities */}
       <div className="space-y-2">
-        <div className="text-xs font-medium text-gray-700 dark:text-neutral-textMuted">Quick access:</div>
+        <div className="text-xs font-medium text-neutral-700 dark:text-neutral-textMuted">Quick access:</div>
         <div className="grid grid-cols-2 gap-1">
           {Object.keys(mockWeatherData).map((city) => (
             <Button

@@ -395,7 +395,7 @@ export const WidgetManagementModal: React.FC = () => {
           )}
 
           {/* Action Buttons */}
-          <div className="flex space-x-3 pt-4 border-t border-gray-200 dark:border-neutral-700">
+          <div className="flex space-x-3 pt-4 border-t border-neutral-200 dark:border-neutral-700">
             <Button
               onClick={handleApplyChanges}
               disabled={!hasAnyPending}
@@ -456,7 +456,7 @@ const ConfirmationDialog: React.FC = () => {
       size="sm"
     >
       <div className="space-y-4">
-        <p className="text-gray-700 dark:text-neutral-textMuted">{confirmDialogMessage}</p>
+        <p className="text-neutral-700 dark:text-neutral-textMuted">{confirmDialogMessage}</p>
         
         <div className="flex space-x-3">
           <Button onClick={handleConfirm} variant="danger" className="flex-1">

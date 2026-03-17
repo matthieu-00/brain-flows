@@ -129,7 +129,7 @@ export const Header: React.FC = () => {
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <Signature className="w-6 h-6 text-sage-900 dark:text-sage-400" />
-              <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-text">brainsflow.io</h1>
+              <h1 className="font-display text-xl font-bold text-neutral-900 dark:text-neutral-text">brainsflow.io</h1>
             </div>
           </div>
 
@@ -164,7 +164,7 @@ export const Header: React.FC = () => {
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95, y: -8 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
-                  className="absolute right-0 mt-2 w-56 bg-white dark:bg-neutral-surface rounded-lg shadow-lg border border-gray-200 dark:border-neutral-700 py-1 z-50"
+                  className="absolute right-0 mt-2 w-56 bg-white dark:bg-neutral-surface rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 py-1 z-50"
                 >
                   <div className="px-3 py-2 text-xs font-medium text-neutral-500 dark:text-neutral-textMuted">
                     Format for this document
@@ -212,7 +212,7 @@ export const Header: React.FC = () => {
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95, y: -8 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
-                  className="absolute right-0 mt-2 w-56 bg-white dark:bg-neutral-surface rounded-lg shadow-lg border border-gray-200 dark:border-neutral-700 py-1 z-50"
+                  className="absolute right-0 mt-2 w-56 bg-white dark:bg-neutral-surface rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 py-1 z-50"
                 >
                   <div className="px-3 py-2 text-xs font-medium text-neutral-500 dark:text-neutral-textMuted">
                     Export as
@@ -265,7 +265,7 @@ export const Header: React.FC = () => {
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95, y: -8 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
-                  className="absolute right-0 mt-2 w-52 bg-white dark:bg-neutral-surface rounded-lg shadow-lg border border-gray-200 dark:border-neutral-700 py-1 z-50"
+                  className="absolute right-0 mt-2 w-52 bg-white dark:bg-neutral-surface rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 py-1 z-50"
                 >
                   <button
                     type="button"
@@ -350,7 +350,7 @@ export const Header: React.FC = () => {
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95, y: -10 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
-                  className="absolute right-0 mt-2 w-56 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-gray-200 dark:border-neutral-700 py-1 z-50"
+                  className="absolute right-0 mt-2 w-56 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 py-1 z-50"
                 >
                   <div className="px-4 py-2 border-b border-neutral-300 dark:border-neutral-700">
                     <div className="text-sm font-medium text-neutral-900 dark:text-neutral-text">

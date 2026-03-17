@@ -162,7 +162,7 @@ const AIChatWidget: React.FC<AIChatWidgetProps> = ({ widget }) => {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="p-3 border-b border-gray-200 dark:border-neutral-600 bg-gray-50 dark:bg-neutral-800"
+            className="p-3 border-b border-neutral-200 dark:border-neutral-600 bg-neutral-50 dark:bg-neutral-800"
           >
             <div className="space-y-2">
               <Input
@@ -198,7 +198,7 @@ const AIChatWidget: React.FC<AIChatWidgetProps> = ({ widget }) => {
         )}
 
         {messages.length === 0 ? (
-          <div className="text-center py-8 text-gray-500 dark:text-neutral-textMuted">
+          <div className="text-center py-8 text-neutral-500 dark:text-neutral-textMuted">
             <div className="text-4xl mb-2">🤖</div>
             <p className="text-sm">Start a conversation with AI</p>
             <p className="text-xs mt-1">
@@ -217,13 +217,13 @@ const AIChatWidget: React.FC<AIChatWidgetProps> = ({ widget }) => {
                 <div
                   className={`max-w-[80%] px-3 py-2 rounded-lg text-sm ${
                     msg.role === 'user'
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-200 dark:bg-neutral-800 text-gray-800 dark:text-neutral-100'
+                      ? 'bg-sage-700 text-white'
+                      : 'bg-neutral-200 dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100'
                   }`}
                 >
                   <div>{msg.content}</div>
                   <div className={`text-xs mt-1 ${
-                    msg.role === 'user' ? 'text-blue-100' : 'text-gray-500 dark:text-neutral-textMuted'
+                    msg.role === 'user' ? 'text-sage-100' : 'text-neutral-500 dark:text-neutral-textMuted'
                   }`}>
                     {new Date(msg.timestamp).toLocaleTimeString()}
                   </div>
@@ -239,11 +239,11 @@ const AIChatWidget: React.FC<AIChatWidgetProps> = ({ widget }) => {
             animate={{ opacity: 1, y: 0 }}
             className="flex justify-start"
           >
-            <div className="bg-gray-200 dark:bg-neutral-800 px-3 py-2 rounded-lg text-sm">
+            <div className="bg-neutral-200 dark:bg-neutral-800 px-3 py-2 rounded-lg text-sm">
               <div className="flex space-x-1">
-                <div className="w-2 h-2 bg-gray-400 dark:bg-neutral-500 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-gray-400 dark:bg-neutral-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                <div className="w-2 h-2 bg-gray-400 dark:bg-neutral-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-2 h-2 bg-neutral-400 dark:bg-neutral-500 rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-neutral-400 dark:bg-neutral-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                <div className="w-2 h-2 bg-neutral-400 dark:bg-neutral-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
               </div>
             </div>
           </motion.div>
@@ -251,7 +251,7 @@ const AIChatWidget: React.FC<AIChatWidgetProps> = ({ widget }) => {
       </div>
 
       {/* Input */}
-      <div className="p-3 border-t border-gray-200">
+      <div className="p-3 border-t border-neutral-200 dark:border-neutral-700">
         <div className="flex space-x-2">
           <input
             type="text"
@@ -259,7 +259,7 @@ const AIChatWidget: React.FC<AIChatWidgetProps> = ({ widget }) => {
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
             placeholder="Type your message..."
-            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-700 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-text focus:outline-none focus:ring-2 focus:ring-sage-700"
             disabled={isLoading}
           />
           <Button

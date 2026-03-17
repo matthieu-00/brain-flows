@@ -141,7 +141,7 @@ export const DocumentSwitcher: React.FC = () => {
           ref={dropdownRef}
           initial={{ opacity: 0, scale: 0.95, y: -8 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          className="w-72 bg-white dark:bg-neutral-surface rounded-lg shadow-lg border border-gray-200 dark:border-neutral-700 py-1 max-h-60 overflow-y-auto"
+          className="w-72 bg-white dark:bg-neutral-surface rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 py-1 max-h-60 overflow-y-auto"
           style={dropdownStyle}
         >
           {sortedDocuments.map((doc) => {

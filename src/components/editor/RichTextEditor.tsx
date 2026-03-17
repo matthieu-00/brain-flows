@@ -210,7 +210,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ className }) => 
   if (!editor) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-pulse text-gray-500">Loading editor...</div>
+        <div className="animate-pulse text-neutral-500">Loading editor...</div>
       </div>
     );
   }
@@ -259,7 +259,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ className }) => 
                   left: dropdownPosition.left,
                   zIndex: 9999,
                 }}
-                className="w-64 max-h-[min(70vh,28rem)] overflow-y-auto bg-white dark:bg-neutral-surface rounded-lg shadow-lg border border-gray-200 dark:border-neutral-700 py-2"
+                className="w-64 max-h-[min(70vh,28rem)] overflow-y-auto bg-white dark:bg-neutral-surface rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 py-2"
               >
                 <div className="px-3 py-1.5 flex items-center gap-2">
                   <button

@@ -144,13 +144,13 @@ const CalculatorWidget: React.FC<CalculatorWidgetProps> = ({ widget }) => {
   return (
     <div className="space-y-4">
       {/* Display */}
-      <div className="bg-gray-900 text-white p-4 rounded-lg">
+      <div className="bg-neutral-900 dark:bg-neutral-800 text-white p-4 rounded-lg">
         <div className="text-right">
           <div className="text-2xl font-mono font-bold truncate">
             {display}
           </div>
           {operation && previousValue !== null && (
-            <div className="text-sm text-gray-400 mt-1">
+            <div className="text-sm text-neutral-400 mt-1">
               {previousValue} {operation}
             </div>
           )}
@@ -187,14 +187,14 @@ const CalculatorWidget: React.FC<CalculatorWidgetProps> = ({ widget }) => {
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: 'auto', opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
-          className="bg-gray-50 dark:bg-neutral-800 rounded-lg p-3 max-h-32 overflow-y-auto"
+          className="bg-neutral-50 dark:bg-neutral-800 rounded-lg p-3 max-h-32 overflow-y-auto"
         >
           {history.length === 0 ? (
-            <p className="text-sm text-gray-500 dark:text-neutral-400 text-center py-2">No calculations yet</p>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400 text-center py-2">No calculations yet</p>
           ) : (
             <div className="space-y-1">
               {history.map((calculation, index) => (
-                <div key={index} className="text-xs font-mono text-gray-700 dark:text-neutral-textMuted">
+                <div key={index} className="text-xs font-mono text-neutral-700 dark:text-neutral-textMuted">
                   {calculation}
                 </div>
               ))}

@@ -91,7 +91,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-cream-50 dark:bg-neutral-950">
+    <div className="min-h-screen bg-gradient-to-b from-cream-50 to-cream-100 dark:from-neutral-950 dark:to-neutral-950 font-body">
       {!isOnline && <OfflineBanner />}
       <Header />
       <MainLayout />

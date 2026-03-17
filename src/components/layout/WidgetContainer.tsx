@@ -88,7 +88,7 @@ const WidgetContainer: React.FC<WidgetContainerProps> = ({
         return <WeatherWidget widget={widget} />;
       default:
         return (
-          <div className="text-center py-8 text-gray-500 dark:text-neutral-400">
+          <div className="text-center py-8 text-neutral-500 dark:text-neutral-400">
             <div className="text-4xl mb-2">❓</div>
             <p className="text-sm">Unknown widget type</p>
           </div>

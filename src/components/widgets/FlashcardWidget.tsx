@@ -92,7 +92,7 @@ const FlashcardWidget: React.FC<FlashcardWidgetProps> = ({ widget }) => {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="space-y-3 p-4 bg-gray-50 dark:bg-neutral-800 rounded-lg"
+            className="space-y-3 p-4 bg-neutral-50 dark:bg-neutral-800 rounded-lg"
           >
             <Input
               placeholder="Front of card..."
@@ -122,7 +122,7 @@ const FlashcardWidget: React.FC<FlashcardWidgetProps> = ({ widget }) => {
           {/* Card Management */}
           {isEditing && (
             <div className="space-y-2">
-              <h4 className="text-sm font-medium text-gray-700 dark:text-neutral-textMuted">Manage Cards:</h4>
+              <h4 className="text-sm font-medium text-neutral-700 dark:text-neutral-textMuted">Manage Cards:</h4>
               <div className="max-h-32 overflow-y-auto space-y-1">
                 {flashcards.map((card) => (
                   <div
@@ -147,14 +147,14 @@ const FlashcardWidget: React.FC<FlashcardWidgetProps> = ({ widget }) => {
           )}
 
           {/* Simple Flashcard Display */}
-          <div className="text-center py-8 text-gray-500 dark:text-neutral-400">
+          <div className="text-center py-8 text-neutral-500 dark:text-neutral-400">
             <div className="text-2xl mb-2">🃏</div>
             <p className="text-sm">{flashcards.length} flashcard{flashcards.length !== 1 ? 's' : ''} created</p>
             <p className="text-xs mt-1">Interactive flashcard viewer coming soon</p>
           </div>
         </div>
       ) : (
-        <div className="text-center py-12 text-gray-500 dark:text-neutral-400">
+        <div className="text-center py-12 text-neutral-500 dark:text-neutral-400">
           <div className="text-4xl mb-3">🃏</div>
           <p className="text-sm mb-2">No flashcards yet</p>
           <p className="text-xs">Click Edit to add your first flashcard</p>

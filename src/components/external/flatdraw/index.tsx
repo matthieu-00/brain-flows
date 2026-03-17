@@ -253,7 +253,7 @@ const FlatDraw: React.FC<FlatDrawProps> = ({
   return (
     <div className={`flatdraw-container ${className}`}>
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-2 mb-4 p-3 bg-gray-50 rounded-lg">
+      <div className="flex flex-wrap items-center gap-2 mb-4 p-3 bg-neutral-50 rounded-lg">
         {/* Tools */}
         <div className="flex gap-1">
           <button
@@ -291,7 +291,7 @@ const FlatDraw: React.FC<FlatDrawProps> = ({
               <button
                 key={color}
                 onClick={() => setState(prev => ({ ...prev, color }))}
-                className={`w-6 h-6 rounded border-2 ${state.color === color ? 'border-gray-800' : 'border-gray-300'}`}
+                className={`w-6 h-6 rounded border-2 ${state.color === color ? 'border-neutral-800' : 'border-neutral-300'}`}
                 style={{ backgroundColor: color }}
               />
             ))}
@@ -328,7 +328,7 @@ const FlatDraw: React.FC<FlatDrawProps> = ({
         ref={canvasRef}
         width={width}
         height={height}
-        className="border border-gray-300 rounded-lg cursor-crosshair bg-white"
+        className="border border-neutral-300 rounded-lg cursor-crosshair bg-white"
         style={{ maxWidth: '100%', height: 'auto' }}
         onMouseDown={startDrawing}
         onMouseMove={draw}
