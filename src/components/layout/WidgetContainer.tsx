@@ -3,41 +3,16 @@ import { motion } from 'framer-motion';
 import { X, Minimize2, Maximize2 } from 'lucide-react';
 import { Widget } from '../../types';
 import { useLayoutStore } from '../../store/layoutStore';
-import { getWidgetSizingSpec } from '../../constants/widgets';
+import { widgetConfig, getWidgetComponent, getWidgetSizingSpec } from '../../constants/widgets';
 import { Button } from '../ui/Button';
 import { IconButton } from '../ui/IconButton';
 import { InlineAlert } from '../ui/InlineAlert';
 import { ErrorBoundary } from '../ErrorBoundary';
 
-// Lazy load widgets for better performance
-const StickyNotesWidget = React.lazy(() => import('../widgets/StickyNotesWidget'));
-const FlashcardWidget = React.lazy(() => import('../widgets/FlashcardWidget'));
-const ChessWidget = React.lazy(() => import('../widgets/ChessWidget'));
-const SudokuWidget = React.lazy(() => import('../widgets/SudokuWidget'));
-const FidgetToolsWidget = React.lazy(() => import('../widgets/FidgetToolsWidget'));
-const DrawingCanvasWidget = React.lazy(() => import('../widgets/DrawingCanvasWidget'));
-const AIChatWidget = React.lazy(() => import('../widgets/AIChatWidget'));
-const TimerWidget = React.lazy(() => import('../widgets/TimerWidget'));
-const CalculatorWidget = React.lazy(() => import('../widgets/CalculatorWidget'));
-const WeatherWidget = React.lazy(() => import('../widgets/WeatherWidget'));
-
 interface WidgetContainerProps {
   widget: Widget;
   className?: string;
 }
-
-const WIDGET_NAMES: Record<Widget['type'], string> = {
-  'sticky-notes': 'Sticky Notes',
-  'flashcards': 'Flashcards',
-  'chess': 'Chess Game',
-  'sudoku': 'Sudoku',
-  'fidget-tools': 'Fidget Tools',
-  'drawing-canvas': 'Drawing Canvas',
-  'ai-chat': 'AI Chat',
-  'timer': 'Timer',
-  'calculator': 'Calculator',
-  'weather': 'Weather',
-};
 
 const WidgetContainer: React.FC<WidgetContainerProps> = ({
   widget,
@@ -47,6 +22,8 @@ const WidgetContainer: React.FC<WidgetContainerProps> = ({
   const toggleWidgetCollapsed = useLayoutStore((state) => state.toggleWidgetCollapsed);
   const sizingSpec = useMemo(() => getWidgetSizingSpec(widget.type), [widget.type]);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+  const config = useMemo(() => widgetConfig.find(w => w.type === widget.type), [widget.type]);
+  const WidgetComponent = useMemo(() => getWidgetComponent(widget.type), [widget.type]);
 
   const isHorizontalZone = widget.zone === 'top' || widget.zone === 'bottom';
   const containerStyle = useMemo(() => {
@@ -64,41 +41,7 @@ const WidgetContainer: React.FC<WidgetContainerProps> = ({
     return style;
   }, [widget.isCollapsed, sizingSpec, isHorizontalZone]);
 
-  const renderWidget = useMemo(() => {
-    switch (widget.type) {
-      case 'sticky-notes':
-        return <StickyNotesWidget widget={widget} />;
-      case 'flashcards':
-        return <FlashcardWidget widget={widget} />;
-      case 'chess':
-        return <ChessWidget widget={widget} />;
-      case 'sudoku':
-        return <SudokuWidget widget={widget} />;
-      case 'fidget-tools':
-        return <FidgetToolsWidget widget={widget} />;
-      case 'drawing-canvas':
-        return <DrawingCanvasWidget widget={widget} />;
-      case 'ai-chat':
-        return <AIChatWidget widget={widget} />;
-      case 'timer':
-        return <TimerWidget widget={widget} />;
-      case 'calculator':
-        return <CalculatorWidget widget={widget} />;
-      case 'weather':
-        return <WeatherWidget widget={widget} />;
-      default:
-        return (
-          <div className="text-center py-8 text-neutral-500 dark:text-neutral-400">
-            <div className="text-4xl mb-2">❓</div>
-            <p className="text-sm">Unknown widget type</p>
-          </div>
-        );
-    }
-  }, [widget.type, widget.id]);
-
-  const widgetDisplayName = useMemo(() => {
-    return WIDGET_NAMES[widget.type] || 'Widget';
-  }, [widget.type]);
+  const widgetDisplayName = config?.name || 'Widget';
 
   return (
     <motion.div
@@ -197,7 +140,12 @@ const WidgetContainer: React.FC<WidgetContainerProps> = ({
                 </InlineAlert>
               }
             >
-              {renderWidget}
+              {WidgetComponent ? <WidgetComponent widget={widget} /> : (
+                <div className="text-center py-8 text-neutral-500 dark:text-neutral-400">
+                  <div className="text-4xl mb-2">?</div>
+                  <p className="text-sm">Unknown widget type</p>
+                </div>
+              )}
             </ErrorBoundary>
           </Suspense>
         </motion.div>

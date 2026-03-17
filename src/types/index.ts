@@ -32,6 +32,8 @@ export type WidgetType =
   | 'calculator'
   | 'weather';
 
+export type WidgetCategory = 'productivity' | 'games' | 'creative' | 'ai';
+
 export type WidgetZone = 'top' | 'bottom' | 'left' | 'right';
 
 export type WidgetFitMode = 'contain' | 'fill';

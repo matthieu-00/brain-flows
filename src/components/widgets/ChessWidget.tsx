@@ -1,9 +1,5 @@
-// Chess Widget - Powered by react-chessboard and chess.js
-// Original libraries: https://github.com/Clariity/react-chessboard and https://github.com/jhlywa/chess.js
-
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Chessboard } from 'react-chessboard';
-import { Chess } from 'chess.js';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import { Chess, Square } from 'chess.js';
 import { useLayoutStore } from '../../store/layoutStore';
 import { Widget } from '../../types';
 import { RotateCcw } from 'lucide-react';
@@ -21,164 +17,300 @@ interface ChessGameData {
   moveHistory: string[];
 }
 
+const PIECE_UNICODE: Record<string, string> = {
+  wk: '\u2654', wq: '\u2655', wr: '\u2656', wb: '\u2657', wn: '\u2658', wp: '\u2659',
+  bk: '\u265A', bq: '\u265B', br: '\u265C', bb: '\u265D', bn: '\u265E', bp: '\u265F',
+};
+
+const FILES = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] as const;
+const RANKS = [8, 7, 6, 5, 4, 3, 2, 1] as const;
+
+function squareToAlgebraic(row: number, col: number): Square {
+  return `${FILES[col]}${RANKS[row]}` as Square;
+}
+
 const ChessWidget: React.FC<ChessWidgetProps> = ({ widget }) => {
   const { updateWidget } = useLayoutStore();
-  
+
   const boardContainerRef = useRef<HTMLDivElement>(null);
   const [boardSize, setBoardSize] = useState(280);
 
   useEffect(() => {
     const el = boardContainerRef.current;
     if (!el) return;
-    const observer = new ResizeObserver((entries) => {
+    const observer = new ResizeObserver(entries => {
       for (const entry of entries) {
         const w = entry.contentRect.width;
-        setBoardSize(Math.max(150, w));
+        setBoardSize(Math.max(150, Math.floor(w)));
       }
     });
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
 
-  const [game, setGame] = useState(() => new Chess());
-  const [gamePosition, setGamePosition] = useState(game.fen());
-  const [invalidMoveMessage, setInvalidMoveMessage] = useState('');
-  
-  // Load saved game state
-  useEffect(() => {
-    const savedData = widget.data as ChessGameData;
+  const [game, setGame] = useState(() => {
+    const savedData = widget.data as ChessGameData | undefined;
     if (savedData?.fen) {
-      const newGame = new Chess(savedData.fen);
-      setGame(newGame);
-      setGamePosition(newGame.fen());
-    }
-  }, [widget.data]);
-
-  // Save game state
-  const saveGameState = useCallback((currentGame: Chess) => {
-    const gameData: ChessGameData = {
-      fen: currentGame.fen(),
-      pgn: currentGame.pgn(),
-      gameStatus: currentGame.isGameOver() ? 'Game Over' : 'In Progress',
-      currentPlayer: currentGame.turn() === 'w' ? 'white' : 'black',
-      moveHistory: currentGame.history()
-    };
-    
-    updateWidget(widget.id, { data: gameData });
-  }, [widget.id, updateWidget]);
-
-  // Handle piece moves
-  const onDrop = useCallback((sourceSquare: string, targetSquare: string) => {
-    const gameCopy = new Chess(game.fen());
-    
-    try {
-      const move = gameCopy.move({
-        from: sourceSquare,
-        to: targetSquare,
-        promotion: 'q' // Always promote to queen for simplicity
-      });
-
-      if (move) {
-        setInvalidMoveMessage('');
-        setGame(gameCopy);
-        setGamePosition(gameCopy.fen());
-        saveGameState(gameCopy);
-        return true;
+      try {
+        return new Chess(savedData.fen);
+      } catch {
+        return new Chess();
       }
-    } catch {
-      // Invalid move
-      setInvalidMoveMessage('Invalid move. Try a legal move.');
-      return false;
     }
-    
-    return false;
-  }, [game, saveGameState]);
+    return new Chess();
+  });
 
-  // Reset game
+  const [selectedSquare, setSelectedSquare] = useState<Square | null>(null);
+
+  const validMoves = useMemo(() => {
+    if (!selectedSquare) return new Set<string>();
+    try {
+      const moves = game.moves({ square: selectedSquare, verbose: true });
+      return new Set(moves.map(m => m.to));
+    } catch {
+      return new Set<string>();
+    }
+  }, [game, selectedSquare]);
+
+  const saveGameState = useCallback(
+    (currentGame: Chess) => {
+      const gameData: ChessGameData = {
+        fen: currentGame.fen(),
+        pgn: currentGame.pgn(),
+        gameStatus: currentGame.isGameOver() ? 'Game Over' : 'In Progress',
+        currentPlayer: currentGame.turn() === 'w' ? 'white' : 'black',
+        moveHistory: currentGame.history(),
+      };
+      updateWidget(widget.id, { data: gameData });
+    },
+    [widget.id, updateWidget]
+  );
+
+  const handleSquareClick = useCallback(
+    (square: Square) => {
+      if (game.isGameOver()) return;
+
+      const piece = game.get(square);
+
+      if (selectedSquare) {
+        if (selectedSquare === square) {
+          setSelectedSquare(null);
+          return;
+        }
+
+        if (validMoves.has(square)) {
+          const gameCopy = new Chess(game.fen());
+          try {
+            const move = gameCopy.move({
+              from: selectedSquare,
+              to: square,
+              promotion: 'q',
+            });
+            if (move) {
+              setGame(gameCopy);
+              setSelectedSquare(null);
+              saveGameState(gameCopy);
+              return;
+            }
+          } catch {
+            // fall through
+          }
+        }
+
+        if (piece && piece.color === game.turn()) {
+          setSelectedSquare(square);
+          return;
+        }
+
+        setSelectedSquare(null);
+        return;
+      }
+
+      if (piece && piece.color === game.turn()) {
+        setSelectedSquare(square);
+      }
+    },
+    [game, selectedSquare, validMoves, saveGameState]
+  );
+
   const resetGame = useCallback(() => {
     const newGame = new Chess();
     setGame(newGame);
-    setGamePosition(newGame.fen());
-    setInvalidMoveMessage('');
+    setSelectedSquare(null);
     saveGameState(newGame);
   }, [saveGameState]);
 
-  // Get game status
   const getGameStatus = () => {
     if (game.isCheckmate()) {
       return `Checkmate! ${game.turn() === 'w' ? 'Black' : 'White'} wins!`;
     }
-    if (game.isDraw()) {
-      return 'Game is a draw';
-    }
+    if (game.isDraw()) return 'Draw';
+    if (game.isStalemate()) return 'Stalemate';
+    if (game.isThreefoldRepetition()) return 'Draw by repetition';
+    if (game.isInsufficientMaterial()) return 'Draw — insufficient material';
     if (game.isCheck()) {
       return `${game.turn() === 'w' ? 'White' : 'Black'} is in check`;
     }
     return `${game.turn() === 'w' ? 'White' : 'Black'} to move`;
   };
 
+  const squareSize = boardSize / 8;
+
   return (
-    <div className="w-full h-full overflow-hidden">
+    <div className="w-full h-full overflow-hidden font-body">
       {/* Controls */}
-      <div className="flex items-center justify-end mb-4">
-        <Button
-          onClick={resetGame}
-          variant="secondary"
-          size="sm"
-          title="New Game"
-        >
+      <div className="flex items-center justify-end mb-3">
+        <Button onClick={resetGame} variant="secondary" size="sm" title="New Game">
           <RotateCcw className="w-4 h-4 mr-1" />
           New Game
         </Button>
       </div>
 
-      {/* Game Content */}
-      <div className="flex flex-col h-full">
-        {/* Game Status */}
-        <div className="mb-4 p-3 bg-sage-100 dark:bg-sage-400/20 rounded-lg">
-          <p className="text-sm font-medium text-sage-900">
-            {getGameStatus()}
-          </p>
-          {game.history().length > 0 && (
-            <p className="text-xs text-sage-700 mt-1">
-              Last move: {game.history().slice(-1)[0]}
-            </p>
-          )}
-          {invalidMoveMessage && (
-            <p className="text-xs text-red-600 mt-1">{invalidMoveMessage}</p>
-          )}
-        </div>
-
-
-        {/* Chess Board */}
-        <div ref={boardContainerRef} className="flex-1 flex items-center justify-center">
-          <Chessboard
-            position={gamePosition}
-            onPieceDrop={onDrop}
-            boardWidth={boardSize}
-            customBoardStyle={{
-              borderRadius: '8px',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-            }}
-            customDarkSquareStyle={{ backgroundColor: '#4A7C59' }}
-            customLightSquareStyle={{ backgroundColor: '#E8F5E8' }}
-          />
-        </div>
-
-        {/* Move History */}
+      {/* Game Status */}
+      <div className="mb-3 p-2.5 bg-sage-100 dark:bg-sage-400/20 rounded-lg">
+        <p className="text-sm font-medium text-sage-900 dark:text-sage-200 font-display">
+          {getGameStatus()}
+        </p>
         {game.history().length > 0 && (
-          <div className="mt-4 p-3 bg-neutral-100 dark:bg-neutral-800 rounded-lg max-h-24 overflow-y-auto">
-            <p className="text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1">Move History:</p>
-            <div className="text-xs text-neutral-600 dark:text-neutral-textMuted space-x-2">
-              {game.history().map((move, index) => (
-                <span key={index} className="inline-block">
-                  {Math.floor(index / 2) + 1}.{index % 2 === 0 ? '' : '..'} {move}
-                </span>
-              ))}
-            </div>
-          </div>
+          <p className="text-xs text-sage-700 dark:text-sage-400 mt-0.5">
+            Last move: {game.history().slice(-1)[0]}
+          </p>
         )}
       </div>
+
+      {/* Board */}
+      <div
+        ref={boardContainerRef}
+        className="w-full flex items-center justify-center"
+      >
+        <div
+          className="relative border-2 border-neutral-400 dark:border-neutral-600 rounded-lg overflow-hidden shadow-md"
+          style={{ width: boardSize, height: boardSize }}
+        >
+          {/* Squares */}
+          <div className="grid grid-cols-8 w-full h-full">
+            {RANKS.map((rank, rowIdx) =>
+              FILES.map((file, colIdx) => {
+                const square = squareToAlgebraic(rowIdx, colIdx);
+                const piece = game.get(square);
+                const isLight = (rowIdx + colIdx) % 2 === 0;
+                const isSelected = selectedSquare === square;
+                const isValidTarget = validMoves.has(square);
+                const isLastMove = (() => {
+                  const history = game.history({ verbose: true });
+                  if (history.length === 0) return false;
+                  const last = history[history.length - 1];
+                  return last.from === square || last.to === square;
+                })();
+
+                const pieceKey = piece
+                  ? `${piece.color}${piece.type}`
+                  : null;
+
+                return (
+                  <button
+                    key={square}
+                    onClick={() => handleSquareClick(square)}
+                    className={`relative flex items-center justify-center transition-colors
+                      ${isLight
+                        ? 'bg-sage-100 dark:bg-sage-200'
+                        : 'bg-sage-700 dark:bg-sage-800'
+                      }
+                      ${isSelected ? 'ring-2 ring-inset ring-sage-400 dark:ring-sage-300 z-10' : ''}
+                      ${isLastMove && !isSelected ? (isLight ? 'bg-sage-200 dark:bg-sage-300' : 'bg-sage-600 dark:bg-sage-700') : ''}
+                    `}
+                    style={{
+                      width: squareSize,
+                      height: squareSize,
+                      fontSize: squareSize * 0.7,
+                      lineHeight: 1,
+                    }}
+                  >
+                    {/* Valid move indicator */}
+                    {isValidTarget && !piece && (
+                      <span
+                        className="absolute rounded-full bg-sage-500/40 dark:bg-sage-400/40"
+                        style={{
+                          width: squareSize * 0.25,
+                          height: squareSize * 0.25,
+                        }}
+                      />
+                    )}
+                    {isValidTarget && piece && (
+                      <span
+                        className="absolute inset-0 rounded-sm ring-2 ring-inset ring-sage-500/50 dark:ring-sage-400/50"
+                      />
+                    )}
+
+                    {/* Piece */}
+                    {pieceKey && (
+                      <span
+                        className={`select-none pointer-events-none ${
+                          isLight
+                            ? 'text-neutral-900 dark:text-neutral-900'
+                            : 'text-white dark:text-neutral-100'
+                        }`}
+                        style={{
+                          textShadow: piece.color === 'w'
+                            ? '0 1px 2px rgba(0,0,0,0.3)'
+                            : '0 1px 2px rgba(0,0,0,0.5)',
+                        }}
+                      >
+                        {PIECE_UNICODE[pieceKey]}
+                      </span>
+                    )}
+
+                    {/* Coordinates */}
+                    {colIdx === 0 && (
+                      <span
+                        className={`absolute top-0.5 left-0.5 text-[9px] font-bold leading-none select-none pointer-events-none ${
+                          isLight
+                            ? 'text-sage-600 dark:text-sage-700'
+                            : 'text-sage-300 dark:text-sage-400'
+                        }`}
+                      >
+                        {rank}
+                      </span>
+                    )}
+                    {rowIdx === 7 && (
+                      <span
+                        className={`absolute bottom-0.5 right-0.5 text-[9px] font-bold leading-none select-none pointer-events-none ${
+                          isLight
+                            ? 'text-sage-600 dark:text-sage-700'
+                            : 'text-sage-300 dark:text-sage-400'
+                        }`}
+                      >
+                        {file}
+                      </span>
+                    )}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Move History */}
+      {game.history().length > 0 && (
+        <div className="mt-3 p-2.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg max-h-24 overflow-y-auto">
+          <p className="text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1 font-display">
+            Move History
+          </p>
+          <div className="text-xs text-neutral-600 dark:text-neutral-400 flex flex-wrap gap-x-2 gap-y-0.5">
+            {game.history().map((move, index) => (
+              <span key={index} className="inline-block">
+                {index % 2 === 0 && (
+                  <span className="text-neutral-400 dark:text-neutral-500 mr-0.5">
+                    {Math.floor(index / 2) + 1}.
+                  </span>
+                )}
+                {move}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

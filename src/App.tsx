@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 import { useDocumentStore } from './store/documentStore';
 import { useLayoutStore } from './store/layoutStore';
@@ -10,6 +11,7 @@ import { MainLayout } from './components/layout/MainLayout';
 import { OfflineBanner } from './components/OfflineBanner';
 import { WidgetManagementModal } from './components/modals/WidgetManagementModal';
 import { AgentChatModal } from './components/agent/AgentChatModal';
+import { MarketplacePage } from './components/marketplace/MarketplacePage';
 import { ToastContainer } from './components/ui/Toast';
 
 // Returns true if the hex color is dark (low luminance, unreadable on dark bg)
@@ -94,9 +96,11 @@ function App() {
     <div className="min-h-screen bg-gradient-to-b from-cream-50 to-cream-100 dark:from-neutral-950 dark:to-neutral-950 font-body">
       {!isOnline && <OfflineBanner />}
       <Header />
-      <MainLayout />
-      <WidgetManagementModal />
-      <AgentChatModal />
+      <Routes>
+        <Route path="/" element={<><MainLayout /><WidgetManagementModal /><AgentChatModal /></>} />
+        <Route path="/marketplace" element={<MarketplacePage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
       <ToastContainer />
     </div>
   );

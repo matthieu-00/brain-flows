@@ -93,7 +93,11 @@ const defaultSettings: AppSettings = {
 export const useLayoutStore = create<LayoutState>()(
   persist(
     (set, get) => ({
-      widgets: [],
+      widgets: [
+        { id: 'default-timer', type: 'timer', zone: 'right', isEnabled: true, isCollapsed: false, position: 0, size: 50, data: {} },
+        { id: 'default-sticky-notes', type: 'sticky-notes', zone: 'right', isEnabled: true, isCollapsed: false, position: 1, size: 50, data: {} },
+        { id: 'default-ai-chat', type: 'ai-chat', zone: 'left', isEnabled: true, isCollapsed: false, position: 0, size: 50, data: {} },
+      ],
       layoutConfig: defaultLayoutConfig,
       settings: defaultSettings,
       distractionFreeMode: false,

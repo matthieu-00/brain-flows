@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Settings, 
   LogOut, 
@@ -17,6 +18,7 @@ import {
   MessageSquare,
   PanelLeftClose,
   PanelRightClose,
+  Store,
 } from 'lucide-react';
 import { ExportFormat } from '../../types';
 import { useAuthStore } from '../../store/authStore';
@@ -44,6 +46,9 @@ export const Header: React.FC = () => {
   const newDocDropdownRef = useRef<HTMLDivElement>(null);
   const agentDropdownRef = useRef<HTMLDivElement>(null);
   const { agentPanelSide, setAgentPanelSide, openAgentChat } = useAgentStore();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isMarketplace = location.pathname === '/marketplace';
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -131,6 +136,17 @@ export const Header: React.FC = () => {
               <Signature className="w-6 h-6 text-sage-900 dark:text-sage-400" />
               <h1 className="font-display text-xl font-bold text-neutral-900 dark:text-neutral-text">brainsflow.io</h1>
             </div>
+            <button
+              onClick={() => navigate('/marketplace')}
+              className={`text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                isMarketplace
+                  ? 'text-sage-700 dark:text-sage-400'
+                  : 'text-neutral-600 dark:text-neutral-textMuted hover:text-sage-700 dark:hover:text-sage-400'
+              }`}
+            >
+              <Store className="w-4 h-4" />
+              Marketplace
+            </button>
           </div>
 
           {/* Right side */}
