@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Bot, Pencil, FileText, ChevronDown, CheckSquare, Square, Paperclip, Download, X } from 'lucide-react';
+import { Send, Bot, Pencil, FileText, ChevronDown, CheckSquare, Square, Paperclip, Download, X, Copy as CopyIcon, Quote as QuoteIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Modal } from '../ui/Modal';
 import { useAgentStore } from '../../store/agentStore';
@@ -73,6 +73,11 @@ export const AgentChatModal: React.FC = () => {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<AgentChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [quotedSnippet, setQuotedSnippet] = useState<{
+    text: string;
+    messageId?: string;
+    role?: 'user' | 'assistant';
+  } | null>(null);
   const [editingName, setEditingName] = useState(false);
   const [draftName, setDraftName] = useState('');
   const [showDocsDropdown, setShowDocsDropdown] = useState(false);
@@ -146,6 +151,37 @@ export const AgentChatModal: React.FC = () => {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [isChatOpen, messages]);
+
+  const handleMouseUpSelection = useCallback(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed) return;
+
+    const anchorNode = sel.anchorNode;
+    const focusNode = sel.focusNode;
+    const isInContainer =
+      (anchorNode && container.contains(anchorNode)) ||
+      (focusNode && container.contains(focusNode));
+    if (!isInContainer) return;
+
+    const text = sel.toString().trim();
+    if (!text) return;
+
+    let node: Node | null = anchorNode;
+    let messageId: string | undefined;
+    let role: 'user' | 'assistant' | undefined;
+    while (node && node !== container) {
+      if (node instanceof HTMLElement && node.dataset.messageId) {
+        messageId = node.dataset.messageId;
+        role = (node.dataset.role as 'user' | 'assistant') || undefined;
+        break;
+      }
+      node = node.parentNode;
+    }
+
+    setQuotedSnippet({ text, messageId, role });
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -245,18 +281,25 @@ export const AgentChatModal: React.FC = () => {
 
   const sendMessage = async () => {
     const text = message.trim();
-    if (!text && !pendingAttachments.length) return;
+    const hasAttachments = pendingAttachments.length > 0;
+    if (!text && !hasAttachments) return;
+
+    const composedContent =
+      (quotedSnippet?.text
+        ? `> ${quotedSnippet.text}\n\n${text}`
+        : text) || (hasAttachments ? '(attachment)' : '');
 
     const userMsg: AgentChatMessage = {
       id: `u-${Date.now()}`,
       role: 'user',
-      content: text || '(attachment)',
+      content: composedContent,
       timestamp: new Date().toISOString(),
       attachments: pendingAttachments.length > 0 ? [...pendingAttachments] : undefined,
     };
     setMessages((prev) => [...prev, userMsg]);
     setMessage('');
     setPendingAttachments([]);
+    setQuotedSnippet(null);
     setIsLoading(true);
 
     await new Promise((r) => setTimeout(r, 800));
@@ -546,6 +589,7 @@ export const AgentChatModal: React.FC = () => {
         <div
           ref={scrollRef}
           className="flex-1 overflow-y-auto rounded-lg border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/50 p-3 space-y-3"
+          onMouseUp={handleMouseUpSelection}
         >
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full text-center text-neutral-500 dark:text-neutral-textMuted">
@@ -555,38 +599,77 @@ export const AgentChatModal: React.FC = () => {
             </div>
           )}
           <AnimatePresence>
-            {messages.map((msg) => (
-              <motion.div
-                key={msg.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-[85%] px-3 py-2 rounded-lg text-sm ${
-                    msg.role === 'user'
-                      ? 'bg-sage-600 text-white'
-                      : 'bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-text border border-neutral-200 dark:border-neutral-600'
-                  }`}
+            {messages.map((msg) => {
+              const senderLabel = msg.role === 'user' ? 'You' : 'Agent';
+              const timeLabel =
+                msg.timestamp &&
+                new Date(msg.timestamp).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                });
+              const tooltip = timeLabel ? `${senderLabel} • ${timeLabel}` : senderLabel;
+
+              // When a message includes a quoted snippet, it is encoded as:
+              // `> quoted text\n\nrest of message`. Split that into a styled
+              // quote block and the remaining body for clearer visuals.
+              let quoteText: string | null = null;
+              let bodyText = msg.content;
+              if (bodyText.startsWith('> ')) {
+                const splitIdx = bodyText.indexOf('\n\n');
+                if (splitIdx !== -1) {
+                  quoteText = bodyText.slice(2, splitIdx);
+                  bodyText = bodyText.slice(splitIdx + 2);
+                }
+              }
+
+              return (
+                <motion.div
+                  key={msg.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
-                  <span className="whitespace-pre-wrap">
-                    {parseContentWithMentions(msg.content).map((seg, i) =>
-                      seg.type === 'mention' ? (
-                        <span
-                          key={i}
-                          className={
-                            msg.role === 'user'
-                              ? 'inline-flex align-middle px-2 py-0.5 rounded bg-white/25 text-white border border-white/30 mx-0.5 first:ml-0 last:mr-0'
-                              : 'inline-flex align-middle px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-600 text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-500 mx-0.5 first:ml-0 last:mr-0'
-                          }
-                        >
-                          @{seg.value}
-                        </span>
-                      ) : (
-                        <span key={i}>{seg.value}</span>
-                      )
-                    )}
-                  </span>
+                  <div
+                    data-message-id={msg.id}
+                    data-role={msg.role}
+                    title={tooltip}
+                    className={`group relative max-w-[85%] px-3 py-2 rounded-lg text-sm ${
+                      msg.role === 'user'
+                        ? 'bg-sage-600 text-white'
+                        : 'bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-text border border-neutral-200 dark:border-neutral-600'
+                    }`}
+                  >
+                  {quoteText && (
+                    <div
+                      className={`mb-2 px-2 py-1 rounded-md text-xs border ${
+                        msg.role === 'user'
+                          ? 'bg-sage-500/60 border-sage-400/70'
+                          : 'bg-neutral-100 dark:bg-neutral-600 border-neutral-200 dark:border-neutral-500'
+                      }`}
+                    >
+                      <span className="whitespace-pre-wrap">{quoteText}</span>
+                    </div>
+                  )}
+                  {bodyText && (
+                    <span className="whitespace-pre-wrap">
+                      {parseContentWithMentions(bodyText).map((seg, i) =>
+                        seg.type === 'mention' ? (
+                          <span
+                            key={i}
+                            className={
+                              msg.role === 'user'
+                                ? 'inline-flex align-middle px-2 py-0.5 rounded bg-white/25 text-white border border-white/30 mx-0.5 first:ml-0 last:mr-0'
+                                : 'inline-flex align-middle px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-600 text-neutral-800 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-500 mx-0.5 first:ml-0 last:mr-0'
+                            }
+                          >
+                            @{seg.value}
+                          </span>
+                        ) : (
+                          <span key={i}>{seg.value}</span>
+                        )
+                      )}
+                    </span>
+                  )}
                   {msg.attachments && msg.attachments.length > 0 && (
                     <div className="mt-2 space-y-1">
                       {msg.attachments.map((att) => (
@@ -606,9 +689,40 @@ export const AgentChatModal: React.FC = () => {
                       ))}
                     </div>
                   )}
-                </div>
-              </motion.div>
-            ))}
+                  <div
+                    className={`mt-1 flex gap-1 justify-end text-[11px] transition-opacity ${
+                      msg.role === 'user'
+                        ? 'text-sage-50/80 group-hover:opacity-100 opacity-80'
+                        : 'text-neutral-500 dark:text-neutral-300 group-hover:opacity-100 opacity-80'
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+                          navigator.clipboard.writeText(msg.content).catch(() => {
+                            // ignore clipboard errors
+                          });
+                        }
+                      }}
+                      className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/10"
+                      aria-label="Copy message"
+                    >
+                      <CopyIcon className="w-3 h-3" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setQuotedSnippet({ text: msg.content, messageId: msg.id, role: msg.role })}
+                      className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/10"
+                      aria-label="Quote message"
+                    >
+                      <QuoteIcon className="w-3 h-3" />
+                    </button>
+                  </div>
+                  </div>
+                </motion.div>
+              );
+            })}
           </AnimatePresence>
           {isLoading && (
             <div className="flex justify-start">
@@ -618,6 +732,29 @@ export const AgentChatModal: React.FC = () => {
             </div>
           )}
         </div>
+
+        {quotedSnippet && (
+          <div className="mt-2 flex items-start gap-2">
+            <div className="flex-1 min-w-0 px-2 py-1.5 rounded-lg bg-neutral-100 dark:bg-neutral-700 border border-neutral-200 dark:border-neutral-600 text-xs text-neutral-800 dark:text-neutral-100">
+              <div className="flex items-center justify-between gap-2 mb-0.5">
+                <span className="font-medium text-[11px] uppercase tracking-wide text-neutral-500 dark:text-neutral-300">
+                  Quoted {quotedSnippet.role === 'user' ? 'you' : 'assistant'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setQuotedSnippet(null)}
+                  className="p-0.5 rounded hover:bg-neutral-200 dark:hover:bg-neutral-600"
+                  aria-label="Remove quoted snippet"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+              <p className="text-xs max-h-16 overflow-y-auto whitespace-pre-wrap">
+                {quotedSnippet.text}
+              </p>
+            </div>
+          </div>
+        )}
 
         {pendingAttachments.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-2">
@@ -693,6 +830,11 @@ export const AgentChatModal: React.FC = () => {
                     setShowMentionDropdown(false);
                     return;
                   }
+                }
+                if (e.key === 'Escape' && quotedSnippet) {
+                  e.preventDefault();
+                  setQuotedSnippet(null);
+                  return;
                 }
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();

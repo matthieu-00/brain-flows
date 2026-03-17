@@ -91,7 +91,7 @@ export const Modal: React.FC<ModalProps> = ({
           aria-label={title}
           data-modal="true"
         >
-          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 sm:p-6 relative z-10">
+          <div className="flex items-start justify-center min-h-screen px-4 pt-6 pb-8 sm:p-6 relative z-10">
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -112,7 +112,11 @@ export const Modal: React.FC<ModalProps> = ({
             >
               {/* Header */}
               {title && (
-                <div className={`flex items-center justify-between mb-6 ${size === 'focus' ? 'shrink-0' : ''}`}>
+                <div
+                  className={`flex items-center justify-between ${
+                    size === 'focus' ? 'mb-4 shrink-0' : 'mb-3'
+                  }`}
+                >
                   <h2 className="font-display text-lg font-semibold text-neutral-900 dark:text-neutral-text">
                     {title}
                   </h2>

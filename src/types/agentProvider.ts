@@ -14,9 +14,41 @@ export interface DocumentContext {
   selection: DocumentSelection | null;
 }
 
+/**
+ * Optional structured representation of a quoted snippet the user is asking about.
+ * This allows the backend to treat the quote as first-class metadata instead of
+ * relying only on text prefixing in the message body.
+ */
+export interface QuotedSnippet {
+  /** Raw text content of the quote (already trimmed/normalized on the client). */
+  text: string;
+  /**
+   * Where the quote came from. This can be extended later (e.g. 'document',
+   * 'chat_message', 'selection_only'), but we start with concrete values.
+   */
+  source:
+    | 'chat_message' // quoted from a prior chat message bubble
+    | 'document_selection'; // quoted from an editor/document selection
+  /** Optional id of the message the quote was taken from (if applicable). */
+  messageId?: string;
+  /** Optional thread id the quoted message belongs to. */
+  threadId?: string;
+  /** Role of the original message, when source === 'chat_message'. */
+  role?: 'user' | 'assistant';
+}
+
 export interface SendMessageInput {
   message: string;
   context: DocumentContext;
+  /**
+   * Optional structured quote the user highlighted (e.g. from a previous
+   * assistant message or the current document selection).
+   *
+   * When present, backends should treat this as a strong pointer to the
+   * specific text span the user is asking about, and may include it
+   * separately from the free-form `message` in prompts or tools.
+   */
+  quotedSnippet?: QuotedSnippet;
 }
 
 export interface SendMessageResult {
