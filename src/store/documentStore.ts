@@ -5,6 +5,8 @@ import { dateReplacer, dateReviver } from '../utils/persistDates';
 import { exportToPdf } from '../utils/exportPdf';
 import { htmlToMarkdown } from '../utils/exportMarkdown';
 import { htmlToDocxBlob } from '../utils/exportDocx';
+import { isSupabaseConfigured, requireSupabase } from '../lib/supabaseClient';
+import { useAuthStore } from './authStore';
 
 export interface DocumentSelection {
   from: number;
@@ -20,6 +22,8 @@ interface DocumentState {
   isAutoSaveEnabled: boolean;
   lastSaved: Date | null;
   hasUnsavedChanges: boolean;
+  isSyncing: boolean;
+  hasLoadedCloudDocuments: boolean;
   /** Current editor selection (ProseMirror offsets); set by RichTextEditor */
   selection: DocumentSelection | null;
   /** Replacer function registered by the editor for applying suggestions */
@@ -36,6 +40,66 @@ interface DocumentState {
   setEditorReplacer: (replacer: EditorReplacer | null) => void;
   /** Apply a replacement in the editor at the given range. No-op if no editor registered. */
   replaceRange: (from: number, to: number, replacement: string) => void;
+  loadDocumentsForUser: (userId: string) => Promise<void>;
+  saveDocumentToServer: (document: Document) => Promise<void>;
+  syncDocuments: () => Promise<void>;
+}
+
+interface DocumentRow {
+  id: string;
+  user_id: string;
+  title: string;
+  content: string;
+  export_format: ExportFormat | null;
+  word_count: number;
+  character_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+const syncTimers = new Map<string, ReturnType<typeof setTimeout>>();
+const SYNC_DEBOUNCE_MS = 900;
+
+function toDocumentRow(document: Document, userId: string) {
+  return {
+    id: document.id,
+    user_id: userId,
+    title: document.title,
+    content: document.content,
+    export_format: document.exportFormat ?? null,
+    word_count: document.wordCount,
+    character_count: document.characterCount,
+    created_at: document.createdAt.toISOString(),
+    updated_at: document.updatedAt.toISOString(),
+  };
+}
+
+function fromDocumentRow(row: DocumentRow): Document {
+  return {
+    id: row.id,
+    title: row.title,
+    content: row.content,
+    exportFormat: row.export_format ?? undefined,
+    wordCount: row.word_count,
+    characterCount: row.character_count,
+    createdAt: new Date(row.created_at),
+    updatedAt: new Date(row.updated_at),
+  };
+}
+
+function queueDocumentSync(document: Document) {
+  const userId = useAuthStore.getState().user?.id;
+  if (!userId || !isSupabaseConfigured) return;
+
+  const existing = syncTimers.get(document.id);
+  if (existing) clearTimeout(existing);
+
+  const timer = setTimeout(() => {
+    void useDocumentStore.getState().saveDocumentToServer(document);
+    syncTimers.delete(document.id);
+  }, SYNC_DEBOUNCE_MS);
+
+  syncTimers.set(document.id, timer);
 }
 
 export const useDocumentStore = create<DocumentState>()(
@@ -46,6 +110,8 @@ export const useDocumentStore = create<DocumentState>()(
       isAutoSaveEnabled: true,
       lastSaved: null,
       hasUnsavedChanges: false,
+      isSyncing: false,
+      hasLoadedCloudDocuments: false,
       selection: null,
       editorReplacer: null,
 
@@ -59,12 +125,13 @@ export const useDocumentStore = create<DocumentState>()(
       },
 
       createDocument: (title = 'Untitled Document', exportFormat?: ExportFormat) => {
+        const now = new Date();
         const newDoc: Document = {
-          id: Date.now().toString(),
+          id: crypto.randomUUID(),
           title,
           content: '',
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          createdAt: now,
+          updatedAt: now,
           wordCount: 0,
           characterCount: 0,
           ...(exportFormat && { exportFormat }),
@@ -77,6 +144,7 @@ export const useDocumentStore = create<DocumentState>()(
           lastSaved: null,
         }));
 
+        queueDocumentSync(newDoc);
         return newDoc;
       },
 
@@ -95,6 +163,9 @@ export const useDocumentStore = create<DocumentState>()(
             : state.currentDocument,
           hasUnsavedChanges: true,
         }));
+
+        const nextDocument = get().documents.find((doc) => doc.id === id);
+        if (nextDocument) queueDocumentSync(nextDocument);
       },
 
       deleteDocument: (id: string) => {
@@ -107,6 +178,18 @@ export const useDocumentStore = create<DocumentState>()(
           documents: remaining,
           currentDocument: isDeletingCurrent ? nextDoc : state.currentDocument,
         }));
+
+        const pending = syncTimers.get(id);
+        if (pending) {
+          clearTimeout(pending);
+          syncTimers.delete(id);
+        }
+
+        const userId = useAuthStore.getState().user?.id;
+        if (userId && isSupabaseConfigured) {
+          const supabase = requireSupabase();
+          void supabase.from('documents').delete().eq('id', id).eq('user_id', userId);
+        }
       },
 
       loadDocument: (id: string) => {
@@ -119,13 +202,15 @@ export const useDocumentStore = create<DocumentState>()(
 
       saveDocument: () => {
         set({ lastSaved: new Date(), hasUnsavedChanges: false });
-        // Document is already persisted via Zustand persist middleware
+        const { currentDocument } = get();
+        if (currentDocument) queueDocumentSync(currentDocument);
       },
 
       autoSave: () => {
         const { isAutoSaveEnabled, currentDocument } = get();
         if (isAutoSaveEnabled && currentDocument) {
           set({ lastSaved: new Date(), hasUnsavedChanges: false });
+          queueDocumentSync(currentDocument);
         }
       },
 
@@ -166,6 +251,94 @@ export const useDocumentStore = create<DocumentState>()(
         link.download = `${title}.${format}`;
         link.click();
         URL.revokeObjectURL(url);
+      },
+
+      loadDocumentsForUser: async (userId: string) => {
+        if (!isSupabaseConfigured) {
+          set({ hasLoadedCloudDocuments: true });
+          return;
+        }
+
+        const supabase = requireSupabase();
+        set({ isSyncing: true, hasLoadedCloudDocuments: false });
+
+        try {
+          const { data, error } = await supabase
+            .from('documents')
+            .select('*')
+            .eq('user_id', userId)
+            .order('updated_at', { ascending: false });
+          if (error) throw error;
+
+          const rows = (data ?? []) as DocumentRow[];
+          if (rows.length > 0) {
+            const documents = rows.map(fromDocumentRow);
+            set({
+              documents,
+              currentDocument: documents[0] ?? null,
+              hasUnsavedChanges: false,
+              isSyncing: false,
+              hasLoadedCloudDocuments: true,
+            });
+            return;
+          }
+
+          // One-time migration path: if cloud is empty, upload existing local docs.
+          const importedKey = `document-imported-${userId}`;
+          const alreadyImported = localStorage.getItem(importedKey) === 'true';
+          const localDocuments = get().documents;
+          if (!alreadyImported && localDocuments.length > 0) {
+            await get().syncDocuments();
+            localStorage.setItem(importedKey, 'true');
+          }
+
+          set({ isSyncing: false, hasLoadedCloudDocuments: true });
+        } catch {
+          set({ isSyncing: false, hasLoadedCloudDocuments: true });
+        }
+      },
+
+      saveDocumentToServer: async (document: Document) => {
+        const userId = useAuthStore.getState().user?.id;
+        if (!userId || !isSupabaseConfigured) return;
+
+        const supabase = requireSupabase();
+        const payload = toDocumentRow(
+          {
+            ...document,
+            updatedAt: new Date(),
+          },
+          userId
+        );
+
+        set({ isSyncing: true });
+        try {
+          const { error } = await supabase.from('documents').upsert(payload);
+          if (error) throw error;
+          set({ isSyncing: false, lastSaved: new Date(), hasUnsavedChanges: false });
+        } catch {
+          set({ isSyncing: false });
+        }
+      },
+
+      syncDocuments: async () => {
+        const userId = useAuthStore.getState().user?.id;
+        if (!userId || !isSupabaseConfigured) return;
+
+        const { documents } = get();
+        if (documents.length === 0) return;
+
+        const supabase = requireSupabase();
+        set({ isSyncing: true });
+
+        try {
+          const payload = documents.map((doc) => toDocumentRow(doc, userId));
+          const { error } = await supabase.from('documents').upsert(payload);
+          if (error) throw error;
+          set({ isSyncing: false, lastSaved: new Date(), hasUnsavedChanges: false });
+        } catch {
+          set({ isSyncing: false });
+        }
       },
     }),
     {

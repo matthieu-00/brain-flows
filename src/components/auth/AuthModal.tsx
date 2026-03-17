@@ -4,6 +4,7 @@ import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { useAuthStore } from '../../store/authStore';
+import { useToastStore } from '../../store/toastStore';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -17,7 +18,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [name, setName] = useState('');
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  const { login, register, isLoading } = useAuthStore();
+  const { login, register, loginWithProvider, isLoading } = useAuthStore();
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
@@ -59,7 +60,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       setName('');
       setErrors({});
     } catch (error) {
-      setErrors({ submit: 'Authentication failed. Please try again.' });
+      const message = error instanceof Error ? error.message : 'Authentication failed. Please try again.';
+      setErrors({ submit: message });
+      useToastStore.getState().addToast(message, 'error');
+    }
+  };
+
+  const handleOAuthLogin = async (provider: 'google' | 'github') => {
+    setErrors({});
+    try {
+      await loginWithProvider(provider);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : `Failed to start ${provider} sign in.`;
+      setErrors({ submit: message });
+      useToastStore.getState().addToast(message, 'error');
     }
   };
 
@@ -115,6 +129,27 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             {errors.submit}
           </div>
         )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => handleOAuthLogin('google')}
+            disabled={isLoading}
+            className="w-full"
+          >
+            Continue with Google
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => handleOAuthLogin('github')}
+            disabled={isLoading}
+            className="w-full"
+          >
+            Continue with GitHub
+          </Button>
+        </div>
 
         <div className="flex flex-col space-y-3">
           <Button

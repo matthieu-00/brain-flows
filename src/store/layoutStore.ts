@@ -3,6 +3,8 @@ import { createJSONStorage, persist, type StateStorage } from 'zustand/middlewar
 import { ImperativePanelGroupHandle } from 'react-resizable-panels';
 import { Widget, WidgetType, WidgetZone, type LayoutConfig, AppSettings } from '../types';
 import { dateReplacer, dateReviver } from '../utils/persistDates';
+import { isSupabaseConfigured, requireSupabase } from '../lib/supabaseClient';
+import { useAuthStore } from './authStore';
 
 /**
  * Wraps localStorage with a debounced setItem to avoid thrashing storage
@@ -37,6 +39,7 @@ interface LayoutState {
   layoutConfig: LayoutConfig;
   settings: AppSettings;
   distractionFreeMode: boolean;
+  isSyncingSettings: boolean;
   
   // Widget management
   addWidget: (type: WidgetType, zone: WidgetZone) => boolean;
@@ -57,10 +60,24 @@ interface LayoutState {
   // Settings management
   updateSettings: (updates: Partial<AppSettings>) => void;
   toggleDistractionFreeMode: () => void;
+  loadSettingsForUser: (userId: string) => Promise<void>;
+  saveSettingsForUser: () => Promise<void>;
   
   // New method for PanelGroup-based collapsing
   toggleZoneCollapsedWithPanelGroup: (zone: WidgetZone, panelGroupRef: React.RefObject<ImperativePanelGroupHandle>) => void;
 }
+
+interface UserSettingsRow {
+  user_id: string;
+  widgets: Widget[] | null;
+  layout: LayoutConfig | null;
+  preferences: AppSettings | null;
+  distraction_free_mode: boolean | null;
+}
+
+let settingsSaveTimer: ReturnType<typeof setTimeout> | null = null;
+let applyingRemoteSettings = false;
+const SETTINGS_SYNC_DEBOUNCE_MS = 900;
 
 const defaultLayoutConfig: LayoutConfig = {
   topZoneHeight: 25, // percentage
@@ -91,6 +108,18 @@ const defaultSettings: AppSettings = {
   keyboardShortcuts: {},
 };
 
+function queueSettingsSave() {
+  if (applyingRemoteSettings) return;
+  const userId = useAuthStore.getState().user?.id;
+  if (!userId || !isSupabaseConfigured) return;
+
+  if (settingsSaveTimer) clearTimeout(settingsSaveTimer);
+  settingsSaveTimer = setTimeout(() => {
+    void useLayoutStore.getState().saveSettingsForUser();
+    settingsSaveTimer = null;
+  }, SETTINGS_SYNC_DEBOUNCE_MS);
+}
+
 export const useLayoutStore = create<LayoutState>()(
   persist(
     (set, get) => ({
@@ -101,6 +130,7 @@ export const useLayoutStore = create<LayoutState>()(
       layoutConfig: defaultLayoutConfig,
       settings: defaultSettings,
       distractionFreeMode: false,
+      isSyncingSettings: false,
 
       addWidget: (type: WidgetType, zone: WidgetZone) => {
         const existingInZone = get().getWidgetsByZone(zone);
@@ -120,6 +150,7 @@ export const useLayoutStore = create<LayoutState>()(
         set(state => ({
           widgets: [...state.widgets, newWidget],
         }));
+        queueSettingsSave();
         return true;
       },
 
@@ -127,6 +158,7 @@ export const useLayoutStore = create<LayoutState>()(
         set(state => ({
           widgets: state.widgets.filter(w => w.id !== widgetId),
         }));
+        queueSettingsSave();
       },
 
       updateWidget: (widgetId: string, updates: Partial<Widget>) => {
@@ -135,6 +167,7 @@ export const useLayoutStore = create<LayoutState>()(
             w.id === widgetId ? { ...w, ...updates } : w
           ),
         }));
+        queueSettingsSave();
       },
 
       moveWidget: (widgetId: string, newZone: WidgetZone, newPosition: number) => {
@@ -145,6 +178,7 @@ export const useLayoutStore = create<LayoutState>()(
               : w
           ),
         }));
+        queueSettingsSave();
       },
 
       toggleWidgetCollapsed: (widgetId: string) => {
@@ -155,12 +189,14 @@ export const useLayoutStore = create<LayoutState>()(
               : w
           ),
         }));
+        queueSettingsSave();
       },
 
       updateLayoutConfig: (updates: Partial<LayoutConfig>) => {
         set(state => ({
           layoutConfig: { ...state.layoutConfig, ...updates },
         }));
+        queueSettingsSave();
       },
 
       handlePanelResize: (zone: WidgetZone, size: number) => {
@@ -189,6 +225,7 @@ export const useLayoutStore = create<LayoutState>()(
 
           return { layoutConfig: newLayoutConfig };
         });
+        queueSettingsSave();
       },
 
       resetLayout: () => {
@@ -196,6 +233,7 @@ export const useLayoutStore = create<LayoutState>()(
           widgets: [],
           layoutConfig: { ...defaultLayoutConfig },
         });
+        queueSettingsSave();
       },
 
       toggleZoneCollapsedWithPanelGroup: (zone: WidgetZone, panelGroupRef: React.RefObject<ImperativePanelGroupHandle>) => {
@@ -299,12 +337,14 @@ export const useLayoutStore = create<LayoutState>()(
         set({
           layoutConfig: newLayoutConfig,
         });
+        queueSettingsSave();
       },
 
       updateSettings: (updates: Partial<AppSettings>) => {
         set(state => ({
           settings: { ...state.settings, ...updates },
         }));
+        queueSettingsSave();
       },
 
       toggleDistractionFreeMode: () => {
@@ -315,6 +355,72 @@ export const useLayoutStore = create<LayoutState>()(
             distractionFreeMode: !state.distractionFreeMode,
           },
         }));
+        queueSettingsSave();
+      },
+
+      loadSettingsForUser: async (userId: string) => {
+        if (!isSupabaseConfigured) return;
+        const supabase = requireSupabase();
+        set({ isSyncingSettings: true });
+
+        try {
+          const { data, error } = await supabase
+            .from('user_settings')
+            .select('user_id, widgets, layout, preferences, distraction_free_mode')
+            .eq('user_id', userId)
+            .maybeSingle();
+          if (error) throw error;
+
+          const row = data as UserSettingsRow | null;
+          if (!row) {
+            const importedKey = `layout-imported-${userId}`;
+            const alreadyImported = localStorage.getItem(importedKey) === 'true';
+            if (!alreadyImported) {
+              await get().saveSettingsForUser();
+              localStorage.setItem(importedKey, 'true');
+            }
+            set({ isSyncingSettings: false });
+            return;
+          }
+
+          applyingRemoteSettings = true;
+          set((state) => ({
+            widgets: Array.isArray(row.widgets) ? row.widgets : state.widgets,
+            layoutConfig: row.layout ?? state.layoutConfig,
+            settings: row.preferences ?? state.settings,
+            distractionFreeMode: row.distraction_free_mode ?? state.distractionFreeMode,
+            isSyncingSettings: false,
+          }));
+          applyingRemoteSettings = false;
+        } catch {
+          applyingRemoteSettings = false;
+          set({ isSyncingSettings: false });
+        }
+      },
+
+      saveSettingsForUser: async () => {
+        const userId = useAuthStore.getState().user?.id;
+        if (!userId || !isSupabaseConfigured) return;
+
+        const supabase = requireSupabase();
+        const { widgets, layoutConfig, settings, distractionFreeMode } = get();
+
+        set({ isSyncingSettings: true });
+        try {
+          const payload = {
+            user_id: userId,
+            widgets,
+            layout: layoutConfig,
+            preferences: settings,
+            distraction_free_mode: distractionFreeMode,
+            updated_at: new Date().toISOString(),
+          };
+          const { error } = await supabase.from('user_settings').upsert(payload);
+          if (error) throw error;
+          set({ isSyncingSettings: false });
+        } catch {
+          set({ isSyncingSettings: false });
+        }
       },
 
       getWidgetsByZone: (zone: WidgetZone) => {

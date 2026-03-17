@@ -8,7 +8,7 @@ import { useUIStore } from '../../store/uiStore';
 import { useLayoutStore } from '../../store/layoutStore';
 import { WidgetType, WidgetZone } from '../../types';
 import { widgetConfig, widgetZones } from '../../constants/widgets';
-import { getOpenAIKeyError, getWeatherKeyError } from '../../utils/apiKeyValidation';
+import { getWeatherKeyError } from '../../utils/apiKeyValidation';
 
 type ManageTab = 'add' | 'remove';
 
@@ -17,7 +17,6 @@ export const WidgetManagementModal: React.FC = () => {
     isWidgetModalOpen,
     widgetModalMode,
     selectedZone,
-    pendingChanges,
     closeWidgetModal,
     setPendingChanges,
   } = useUIStore();
@@ -28,9 +27,8 @@ export const WidgetManagementModal: React.FC = () => {
   const [selectedWidgets, setSelectedWidgets] = useState<WidgetType[]>([]);
   const [selectedWidgetZones, setSelectedWidgetZones] = useState<Map<WidgetType, WidgetZone>>(new Map());
   const [widgetsToRemove, setWidgetsToRemove] = useState<string[]>([]);
-  const [openaiKey, setOpenaiKey] = useState('');
   const [weatherKey, setWeatherKey] = useState('');
-  const [keyErrors, setKeyErrors] = useState<{ openai?: string; weather?: string }>({});
+  const [keyErrors, setKeyErrors] = useState<{ weather?: string }>({});
 
   // When modal opens, reset state and set initial tab from open mode
   useEffect(() => {
@@ -39,12 +37,11 @@ export const WidgetManagementModal: React.FC = () => {
       setSelectedWidgets([]);
       setSelectedWidgetZones(new Map());
       setWidgetsToRemove([]);
-      setOpenaiKey(settings.apiKeys?.openai || '');
       setWeatherKey(settings.apiKeys?.weather || '');
       setKeyErrors({});
       setPendingChanges(false);
     }
-  }, [isWidgetModalOpen, widgetModalMode, setPendingChanges, settings.apiKeys?.openai, settings.apiKeys?.weather]);
+  }, [isWidgetModalOpen, widgetModalMode, setPendingChanges, settings.apiKeys?.weather]);
 
   const handleWidgetSelect = (type: WidgetType) => {
     const newSelection = selectedWidgets.includes(type)
@@ -80,14 +77,11 @@ export const WidgetManagementModal: React.FC = () => {
 
   const handleApplyChanges = () => {
     if (selectedWidgets.length > 0) {
-      const openaiSelected = selectedWidgets.includes('ai-chat');
       const weatherSelected = selectedWidgets.includes('weather');
-      const openaiError = openaiSelected ? getOpenAIKeyError(openaiKey, true) : '';
       const weatherError = weatherSelected ? getWeatherKeyError(weatherKey, true) : '';
 
-      if (openaiError || weatherError) {
+      if (weatherError) {
         setKeyErrors({
-          openai: openaiError || undefined,
           weather: weatherError || undefined,
         });
         return;
@@ -98,11 +92,10 @@ export const WidgetManagementModal: React.FC = () => {
         addWidget(type, zone);
       });
 
-      if (openaiSelected || weatherSelected) {
+      if (weatherSelected) {
         updateSettings({
           apiKeys: {
             ...settings.apiKeys,
-            openai: openaiSelected ? openaiKey.trim() : settings.apiKeys?.openai,
             weather: weatherSelected ? weatherKey.trim() : settings.apiKeys?.weather,
           },
         });
@@ -269,32 +262,6 @@ export const WidgetManagementModal: React.FC = () => {
                               </button>
                             ))}
                           </div>
-                        </div>
-                      )}
-
-                      {showApiKey && widget.apiKeyType === 'openai' && (
-                        <div
-                          className="mt-3 pt-3 border-t border-neutral-200 dark:border-neutral-700"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Input
-                            label="OpenAI API Key"
-                            type="password"
-                            value={openaiKey}
-                            onChange={(e) => {
-                              setOpenaiKey(e.target.value);
-                              if (keyErrors.openai) setKeyErrors((prev) => ({ ...prev, openai: undefined }));
-                            }}
-                            onBlur={() => {
-                              setKeyErrors((prev) => ({
-                                ...prev,
-                                openai: getOpenAIKeyError(openaiKey) || undefined,
-                              }));
-                            }}
-                            placeholder="sk-..."
-                            hint="Required for AI Chat"
-                            error={keyErrors.openai}
-                          />
                         </div>
                       )}
 

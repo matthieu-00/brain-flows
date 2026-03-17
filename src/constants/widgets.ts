@@ -43,7 +43,7 @@ export const widgetConfig: {
   category: WidgetCategory;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   component: React.LazyExoticComponent<React.ComponentType<any>>;
-  apiKeyType?: 'openai' | 'weather';
+  apiKeyType?: 'weather';
   sizing: WidgetSizingSpec;
 }[] = [
   {
@@ -156,7 +156,6 @@ export const widgetConfig: {
     icon: BotMessageSquare,
     category: 'ai',
     component: AIChatWidget,
-    apiKeyType: 'openai',
     sizing: {
       fitMode: 'fill',
       minWidth: 280,

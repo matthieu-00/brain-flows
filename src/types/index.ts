@@ -119,7 +119,6 @@ export interface AppSettings {
   editorFontSize: number;
   editorTextColor: string;
   apiKeys: {
-    openai?: string;
     weather?: string;
   };
   profile?: UserProfile;

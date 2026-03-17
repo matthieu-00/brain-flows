@@ -2,10 +2,12 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Bot, Pencil, FileText, ChevronDown, CheckSquare, Square, Paperclip, Download, X, Copy as CopyIcon, Quote as QuoteIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Modal } from '../ui/Modal';
+import { Button } from '../ui/Button';
 import { useAgentStore } from '../../store/agentStore';
 import { useDocumentStore } from '../../store/documentStore';
 import { useToastStore } from '../../store/toastStore';
 import type { PendingSuggestion, AgentChatMessage, AgentChatAttachment } from '../../store/agentStore';
+import { sendAgentMessage } from '../../lib/agentClient';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_MIME_TYPES = [
@@ -61,8 +63,8 @@ export const AgentChatModal: React.FC = () => {
     isChatOpen,
     currentThreadId,
     threads,
+    connectionStatus,
     closeAgentChat,
-    openAgentChat,
     addRunResult,
     addThread,
     updateThread,
@@ -129,7 +131,7 @@ export const AgentChatModal: React.FC = () => {
     const draft = draftsByThreadRef.current[draftKey];
     setMessage(draft?.message ?? '');
     setPendingAttachments(draft?.pendingAttachments ?? []);
-  }, [isChatOpen, currentThreadId, currentThread?.id, draftKey]);
+  }, [isChatOpen, currentThreadId, currentThread, draftKey]);
 
   // Persist current draft into the per-thread map whenever message or pendingAttachments change
   useEffect(() => {
@@ -283,6 +285,10 @@ export const AgentChatModal: React.FC = () => {
     const text = message.trim();
     const hasAttachments = pendingAttachments.length > 0;
     if (!text && !hasAttachments) return;
+    if (connectionStatus !== 'connected') {
+      useToastStore.getState().addToast('Connect your dedicated OpenClaw agent in Settings before sending messages.', 'warning');
+      return;
+    }
 
     const composedContent =
       (quotedSnippet?.text
@@ -302,114 +308,119 @@ export const AgentChatModal: React.FC = () => {
     setQuotedSnippet(null);
     setIsLoading(true);
 
-    await new Promise((r) => setTimeout(r, 800));
-    const docs = useDocumentStore.getState().documents;
-    const contextIds = useAgentStore.getState().currentThreadId
-      ? (useAgentStore.getState().threads.find((t) => t.id === useAgentStore.getState().currentThreadId)?.contextDocumentIds ?? [])
-      : pendingContextDocumentIds;
-    const extraDocs = contextIds.map((id) => docs.find((d) => d.id === id)).filter((d): d is NonNullable<typeof d> => d != null);
-    const atMentionTitles = [...text.matchAll(MENTION_RE)].map((m) => m[1].trim()).filter(Boolean);
-    const mentionedDocs = atMentionTitles
-      .map((title) => docs.find((d) => (d.title || 'Untitled').trim() === title))
-      .filter((d): d is NonNullable<typeof d> => d != null);
-    const seenIds = new Set<string>();
-    const contextDocs = [
-      ...(currentDocument ? [currentDocument] : []),
-      ...extraDocs,
-      ...mentionedDocs,
-    ].filter((d) => {
-      if (seenIds.has(d.id)) return false;
-      seenIds.add(d.id);
-      return true;
-    });
-    const docContext = contextDocs.length > 0
-      ? contextDocs.map((d) => `${d.title} (${d.wordCount} words)`).join('; ')
-      : 'No document open';
-    const mockSummary = `Received: "${text.slice(0, 40)}${text.length > 40 ? '…' : ''}". Document context: ${docContext}.`;
-    const runId = `run-${Date.now()}`;
-
-    let replyContent = `I'll work on that. Check the agent panel for results. (Prototype: document context was "${docContext}".)`;
-    const sel = useDocumentStore.getState().selection;
-    if (sel && sel.text && /fix|spell|correct|replace|suggest|edit/i.test(text)) {
-      const mockReplacement = sel.text.split('').reverse().join('');
-      const sug: PendingSuggestion = {
-        id: `sug-${Date.now()}`,
-        runId,
-        description: `Suggestion for selected text (prototype: reversed characters)`,
-        target: { from: sel.from, to: sel.to },
-        replacement: mockReplacement,
-        status: 'pending',
-      };
-      addPendingSuggestion(sug);
-      useToastStore.getState().addToast('Suggestion added. Open the agent panel to apply or reject.', 'success');
-      replyContent = `I added a suggestion for your selection. Open the agent panel and use Apply or Reject.`;
-    }
-
-    // Agent can suggest a thread name (e.g. from first message)
-    const suggestedName = text.length <= 40 ? text : text.slice(0, 37) + '…';
-
-    // Mock: assistant can attach a file when user asks for export/download/file
-    const wantsFile = /export|download|file|attach|send me/i.test(text);
-    const assistantAttachments: AgentChatAttachment[] = wantsFile
-      ? [
-          {
-            id: `a-att-${Date.now()}`,
-            name: 'agent-response-sample.txt',
-            mimeType: 'text/plain',
-            content: btoa('Sample file from agent (prototype). You asked for a file or export.'),
-          },
-        ]
-      : [];
-
-    const assistantMsg: AgentChatMessage = {
-      id: `a-${Date.now()}`,
-      role: 'assistant',
-      content: replyContent,
-      timestamp: new Date().toISOString(),
-      attachments: assistantAttachments.length > 0 ? assistantAttachments : undefined,
-    };
-
-    const nextMessages = [...messages, userMsg, assistantMsg];
-    setMessages(nextMessages);
-
-    const state = useAgentStore.getState();
-    let threadId = state.currentThreadId;
-
-    if (!threadId) {
-      threadId = `thread-${Date.now()}`;
-      addThread({
-        id: threadId,
-        name: suggestedName,
-        runIds: [],
-        messages: nextMessages,
-        createdAt: new Date().toISOString(),
-        contextDocumentIds: pendingContextDocumentIds.length > 0 ? pendingContextDocumentIds : undefined,
+    try {
+      const docs = useDocumentStore.getState().documents;
+      const contextIds = useAgentStore.getState().currentThreadId
+        ? (useAgentStore.getState().threads.find((t) => t.id === useAgentStore.getState().currentThreadId)?.contextDocumentIds ?? [])
+        : pendingContextDocumentIds;
+      const extraDocs = contextIds.map((id) => docs.find((d) => d.id === id)).filter((d): d is NonNullable<typeof d> => d != null);
+      const atMentionTitles = [...text.matchAll(MENTION_RE)].map((m) => m[1].trim()).filter(Boolean);
+      const mentionedDocs = atMentionTitles
+        .map((title) => docs.find((d) => (d.title || 'Untitled').trim() === title))
+        .filter((d): d is NonNullable<typeof d> => d != null);
+      const seenIds = new Set<string>();
+      const contextDocs = [
+        ...(currentDocument ? [currentDocument] : []),
+        ...extraDocs,
+        ...mentionedDocs,
+      ].filter((d) => {
+        if (seenIds.has(d.id)) return false;
+        seenIds.add(d.id);
+        return true;
       });
-      useAgentStore.setState({ currentThreadId: threadId });
-    } else {
-      updateThread(threadId, { messages: nextMessages });
-      // Optionally let agent set thread name on first exchange (e.g. "Research: xyz")
-      const thread = state.threads.find((t) => t.id === threadId);
-      if (thread && !thread.name && /look into|research|find|explore/i.test(text)) {
-        const agentName = `Research: ${text.slice(0, 25)}${text.length > 25 ? '…' : ''}`;
-        setThreadName(threadId, agentName);
-        setDraftName(agentName);
-      }
-    }
+      const contextDocumentIds = contextDocs.map((d) => d.id);
+      const state = useAgentStore.getState();
+      const threadName = !state.currentThreadId
+        ? (text.length <= 40 ? text : `${text.slice(0, 37)}…`)
+        : undefined;
 
-    addRunResult(
-      {
-        id: runId,
-        type: 'message',
-        summary: mockSummary,
-        status: 'ready',
-        createdAt: new Date().toISOString(),
-        threadId,
-      },
-      threadId
-    );
-    useToastStore.getState().addToast('Agent result ready. Check the panel.', 'info');
-    setIsLoading(false);
+      const response = await sendAgentMessage({
+        surface: 'agent',
+        threadId: state.currentThreadId ?? undefined,
+        threadName,
+        message: text,
+        contextDocumentIds,
+        currentDocumentId: currentDocument?.id ?? null,
+        selection: selection
+          ? { from: selection.from, to: selection.to, text: selection.text }
+          : null,
+        quotedSnippet: quotedSnippet
+          ? { text: quotedSnippet.text, role: quotedSnippet.role, source: 'chat_message' }
+          : null,
+      });
+
+      const assistantMsg: AgentChatMessage = {
+        id: response.assistantMessage.id,
+        role: 'assistant',
+        content: response.assistantMessage.content,
+        timestamp: response.assistantMessage.created_at,
+      };
+
+      const nextMessages = [...messages, userMsg, assistantMsg];
+      setMessages(nextMessages);
+
+      const threadId = response.thread.id;
+      if (!state.currentThreadId) {
+        addThread({
+          id: threadId,
+          name: response.thread.name || threadName || null,
+          runIds: [response.run.id],
+          messages: nextMessages,
+          createdAt: response.thread.created_at,
+          contextDocumentIds: contextDocumentIds.length > 0 ? contextDocumentIds : undefined,
+        });
+        useAgentStore.setState({ currentThreadId: threadId });
+      } else {
+        updateThread(threadId, {
+          messages: nextMessages,
+          name: response.thread.name || state.threads.find((t) => t.id === threadId)?.name || null,
+        });
+      }
+
+      addRunResult(
+        {
+          id: response.run.id,
+          type: 'message',
+          summary: response.run.summary || 'Agent response ready.',
+          status: response.run.status,
+          createdAt: response.run.created_at,
+          threadId,
+        },
+        threadId
+      );
+
+      if (response.suggestions.length > 0) {
+        response.suggestions.forEach((sug) => {
+          const mapped: PendingSuggestion = {
+            id: sug.id,
+            runId: sug.run_id,
+            description: sug.description,
+            target: sug.target?.from != null && sug.target?.to != null
+              ? { from: sug.target.from, to: sug.target.to, documentId: sug.target.documentId }
+              : undefined,
+            replacement: sug.replacement,
+            status: sug.status,
+            confirmationToken: sug.confirmation_token,
+          };
+          addPendingSuggestion(mapped);
+        });
+        useToastStore.getState().addToast('Suggestion queued for confirmation in the agent panel.', 'success');
+      } else {
+        useToastStore.getState().addToast('Agent result ready. Check the panel.', 'info');
+      }
+    } catch (error) {
+      const messageText = error instanceof Error ? error.message : 'Failed to contact agent backend.';
+      const fallbackAssistant: AgentChatMessage = {
+        id: `a-err-${Date.now()}`,
+        role: 'assistant',
+        content: `I could not process that request right now: ${messageText}`,
+        timestamp: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, fallbackAssistant]);
+      useToastStore.getState().addToast(messageText, 'error');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleClose = useCallback(() => {
@@ -427,48 +438,62 @@ export const AgentChatModal: React.FC = () => {
     <Modal
       isOpen={isChatOpen}
       onClose={handleClose}
-      title="AI Agent"
       size="lg"
       initialFocusRef={chatInputRef}
-    >
-      <div className="flex flex-col h-[50vh] min-h-[320px]">
-        {/* Thread name */}
-        <div className="flex items-center gap-2 mb-2">
-          {currentThreadId ? (
-            editingName ? (
-              <input
-                ref={nameInputRef}
-                type="text"
-                value={draftName}
-                onChange={(e) => setDraftName(e.target.value)}
-                onBlur={handleSaveName}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleSaveName();
-                  if (e.key === 'Escape') {
-                    setDraftName(currentThread?.name ?? '');
-                    setEditingName(false);
-                  }
-                }}
-                className="flex-1 px-2 py-1 text-sm border border-neutral-300 dark:border-neutral-600 rounded bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-text"
-              />
+      header={
+        <div className="flex items-center justify-between gap-3">
+          <span className="font-display text-lg font-semibold text-neutral-900 dark:text-neutral-text">
+            AI Agent
+          </span>
+          <div className="flex-1 flex justify-center min-w-0">
+            {currentThreadId ? (
+              editingName ? (
+                <input
+                  ref={nameInputRef}
+                  type="text"
+                  value={draftName}
+                  onChange={(e) => setDraftName(e.target.value)}
+                  onBlur={handleSaveName}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSaveName();
+                    if (e.key === 'Escape') {
+                      setDraftName(currentThread?.name ?? '');
+                      setEditingName(false);
+                    }
+                  }}
+                  className="h-8 px-2 text-sm border border-neutral-300 dark:border-neutral-600 rounded bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-text max-w-xs w-full focus:outline-none focus:ring-2 focus:ring-sage-600 focus:border-sage-500 dark:focus:border-sage-500"
+                />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setEditingName(true)}
+                  className="h-8 flex items-center gap-1.5 min-w-0 px-2 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 text-left max-w-xs w-full justify-center"
+                >
+                  <span className="font-medium text-neutral-900 dark:text-neutral-text truncate">
+                    {currentThread?.name || 'Untitled thread'}
+                  </span>
+                  <Pencil className="w-3 h-3 shrink-0 text-neutral-400" />
+                </button>
+              )
             ) : (
-              <button
-                type="button"
-                onClick={() => setEditingName(true)}
-                className="flex items-center gap-1.5 min-w-0 px-2 py-1 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 text-left"
-              >
-                <span className="font-medium text-neutral-900 dark:text-neutral-text truncate">
-                  {currentThread?.name || 'Untitled thread'}
-                </span>
-                <Pencil className="w-3 h-3 shrink-0 text-neutral-400" />
-              </button>
-            )
-          ) : (
-            <span className="text-sm text-neutral-500 dark:text-neutral-textMuted">
-              New conversation
-            </span>
-          )}
+              <span className="text-sm text-neutral-500 dark:text-neutral-textMuted">
+                New conversation
+              </span>
+            )}
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleClose}
+            className="p-2 shrink-0"
+            aria-label="Close dialog"
+          >
+            <X className="w-4 h-4" />
+          </Button>
         </div>
+      }
+    >
+      <div className="flex flex-col h-[65vh] min-h-[320px]">
 
         {/* Row 2 continued: Current document + included docs as pills, Include more documents */}
         <div className="flex items-center gap-2 mb-2 flex-wrap" ref={docsDropdownRef}>

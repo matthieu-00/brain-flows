@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Search, Check, Plus, Trash2, Key, ArrowLeft } from 'lucide-react';
+import { Search, Check, Plus, Trash2, ArrowLeft } from 'lucide-react';
 import { useLayoutStore } from '../../store/layoutStore';
 import { widgetConfig, widgetCategories, widgetZones } from '../../constants/widgets';
 import type { WidgetCategory, WidgetZone } from '../../types';
@@ -10,12 +10,10 @@ import { Input } from '../ui/Input';
 
 export const MarketplacePage: React.FC = () => {
   const navigate = useNavigate();
-  const { widgets, addWidget, removeWidget, settings, updateSettings } = useLayoutStore();
+  const { widgets, addWidget, removeWidget } = useLayoutStore();
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<WidgetCategory | 'all'>('all');
   const [selectedZones, setSelectedZones] = useState<Record<string, WidgetZone>>({});
-  const [expandedApiKey, setExpandedApiKey] = useState<string | null>(null);
-  const [apiKeyDraft, setApiKeyDraft] = useState('');
 
   const filteredWidgets = useMemo(() => {
     return widgetConfig.filter((w) => {
@@ -32,14 +30,6 @@ export const MarketplacePage: React.FC = () => {
 
   const handleAdd = (type: string) => {
     const zone = selectedZones[type] || 'right';
-    const config = widgetConfig.find((w) => w.type === type);
-
-    if (config?.apiKeyType && apiKeyDraft) {
-      const keyField = config.apiKeyType === 'openai' ? 'openai' : 'weather';
-      updateSettings({ apiKeys: { ...settings.apiKeys, [keyField]: apiKeyDraft } });
-      setApiKeyDraft('');
-      setExpandedApiKey(null);
-    }
 
     addWidget(type as Parameters<typeof addWidget>[0], zone);
   };
@@ -120,13 +110,6 @@ export const MarketplacePage: React.FC = () => {
           {filteredWidgets.map((config, i) => {
             const added = isAdded(config.type);
             const Icon = config.icon;
-            const needsApiKey = !!config.apiKeyType;
-            const hasApiKey = config.apiKeyType === 'openai'
-              ? !!settings.apiKeys?.openai
-              : config.apiKeyType === 'weather'
-                ? !!settings.apiKeys?.weather
-                : false;
-            const showApiKeyInput = expandedApiKey === config.type && !hasApiKey;
 
             return (
               <motion.div
@@ -156,29 +139,6 @@ export const MarketplacePage: React.FC = () => {
                       </p>
                     </div>
                   </div>
-
-                  {/* API Key Input */}
-                  {showApiKeyInput && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      className="mb-3 overflow-hidden"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Key className="w-3.5 h-3.5 text-neutral-400 flex-shrink-0" />
-                        <input
-                          type="password"
-                          value={apiKeyDraft}
-                          onChange={(e) => setApiKeyDraft(e.target.value)}
-                          placeholder={config.apiKeyType === 'openai' ? 'OpenAI API key' : 'Weather API key'}
-                          className="flex-1 px-2.5 py-1.5 text-sm border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-text placeholder-neutral-400 dark:placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-sage-700 dark:focus:ring-sage-500"
-                        />
-                      </div>
-                      <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-1.5 ml-5.5">
-                        Optional — you can also add it later in Settings.
-                      </p>
-                    </motion.div>
-                  )}
 
                   {/* Bottom Section */}
                   <div className="mt-4 pt-3 border-t border-neutral-100 dark:border-neutral-700">
@@ -219,13 +179,7 @@ export const MarketplacePage: React.FC = () => {
                         <Button
                           variant="primary"
                           size="sm"
-                          onClick={() => {
-                            if (needsApiKey && !hasApiKey && expandedApiKey !== config.type) {
-                              setExpandedApiKey(config.type);
-                              return;
-                            }
-                            handleAdd(config.type);
-                          }}
+                          onClick={() => handleAdd(config.type)}
                           className="ml-auto gap-1"
                         >
                           <Plus className="w-3.5 h-3.5" />

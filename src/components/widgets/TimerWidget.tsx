@@ -140,12 +140,12 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ widget }) => {
               onClick={() => adjustTime(-60)}
               variant="secondary"
               className="p-2"
-              disabled={totalSeconds <= 0}
+              disabled={remaining <= 0}
             >
               <Minus className="w-4 h-4" />
             </Button>
             <span className="text-sm text-neutral-600 dark:text-neutral-textMuted min-w-16 text-center">
-              {Math.floor(totalSeconds / 60)}m
+              {Math.floor(remaining / 60)}m
             </span>
             <Button
               onClick={() => adjustTime(60)}
@@ -161,7 +161,7 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ widget }) => {
         <div className="flex items-center gap-3">
           <Button
             onClick={toggleTimer}
-            disabled={totalSeconds === 0}
+            disabled={remaining === 0}
             className="px-6 py-2"
           >
             {isRunning ? (
@@ -187,7 +187,7 @@ const TimerWidget: React.FC<TimerWidgetProps> = ({ widget }) => {
         </div>
 
         {/* Status */}
-        {totalSeconds === 0 && (
+        {remaining === 0 && (
           <div className="mt-4 p-3 bg-sage-100 rounded-lg">
             <p className="text-sm font-medium text-sage-900 text-center">
               Time's up! 🎉

@@ -27,20 +27,30 @@ function isDarkColor(hex: string): boolean {
 }
 
 function App() {
-  const { isAuthenticated } = useAuthStore();
-  const { currentDocument, createDocument } = useDocumentStore();
-  const { settings, updateSettings } = useLayoutStore();
+  const { isAuthenticated, isInitialized, initSession, user } = useAuthStore();
+  const { currentDocument, createDocument, loadDocumentsForUser, hasLoadedCloudDocuments } = useDocumentStore();
+  const { settings, updateSettings, loadSettingsForUser } = useLayoutStore();
   const isOnline = useOnlineStatus();
 
   // Enable keyboard shortcuts
   useKeyboardShortcuts();
 
+  useEffect(() => {
+    void initSession();
+  }, [initSession]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !user?.id) return;
+    void loadDocumentsForUser(user.id);
+    void loadSettingsForUser(user.id);
+  }, [isAuthenticated, user?.id, loadDocumentsForUser, loadSettingsForUser]);
+
   // Create initial document if none exists
   useEffect(() => {
-    if (isAuthenticated && !currentDocument) {
+    if (isAuthenticated && hasLoadedCloudDocuments && !currentDocument) {
       createDocument('Welcome to brainsflow.io');
     }
-  }, [isAuthenticated, currentDocument, createDocument]);
+  }, [isAuthenticated, hasLoadedCloudDocuments, currentDocument, createDocument]);
 
   // Apply theme class to document (only when authenticated)
   useEffect(() => {
@@ -88,6 +98,14 @@ function App() {
       return () => mq.removeEventListener('change', handler);
     }
   }, [isAuthenticated, settings.theme]);
+
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen bg-cream-50 dark:bg-neutral-950 flex items-center justify-center">
+        <div className="text-sm text-neutral-600 dark:text-neutral-textMuted">Loading session...</div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return <LandingPage />;

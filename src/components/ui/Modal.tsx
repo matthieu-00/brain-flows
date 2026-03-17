@@ -11,6 +11,8 @@ interface ModalProps {
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'focus';
   /** When set, focus this element when the modal opens instead of the first focusable (e.g. close button). */
   initialFocusRef?: React.RefObject<HTMLElement | null>;
+  /** Optional fully custom header content; when provided, it replaces the built-in title/close layout. */
+  header?: React.ReactNode;
 }
 
 const FOCUSABLE_SELECTOR =
@@ -23,6 +25,7 @@ export const Modal: React.FC<ModalProps> = ({
   children,
   size = 'md',
   initialFocusRef,
+  header,
 }) => {
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
@@ -111,24 +114,24 @@ export const Modal: React.FC<ModalProps> = ({
               className={`w-full ${size === 'focus' ? 'flex flex-col' : 'inline-block'} ${sizeClasses[size]} p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-neutral-surface shadow-xl rounded-2xl relative z-10`}
             >
               {/* Header */}
-              {title && (
-                <div
-                  className={`flex items-center justify-between ${
-                    size === 'focus' ? 'mb-4 shrink-0' : 'mb-3'
-                  }`}
-                >
-                  <h2 className="font-display text-lg font-semibold text-neutral-900 dark:text-neutral-text">
-                    {title}
-                  </h2>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={onClose}
-                    className="p-2"
-                    aria-label="Close dialog"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
+              {(header || title) && (
+                <div className={size === 'focus' ? 'mb-4 shrink-0' : 'mb-3'}>
+                  {header ?? (
+                    <div className="flex items-center justify-between">
+                      <h2 className="font-display text-lg font-semibold text-neutral-900 dark:text-neutral-text">
+                        {title}
+                      </h2>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={onClose}
+                        className="p-2"
+                        aria-label="Close dialog"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
 

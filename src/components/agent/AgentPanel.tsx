@@ -6,7 +6,6 @@ import {
   MessageSquare,
   Bot,
   AlertCircle,
-  Loader2,
   Check,
   X,
   MoreHorizontal,
@@ -19,6 +18,15 @@ import { useLayoutStore } from '../../store/layoutStore';
 import { useDocumentStore } from '../../store/documentStore';
 import { WidgetZone } from '../../types';
 import { Button } from '../ui/Button';
+import {
+  confirmAgentSuggestion,
+  getOpenClawAgentStatus,
+  fetchAgentState,
+  isAgentBackendEnabled,
+  rejectAgentSuggestion,
+} from '../../lib/agentClient';
+import { mapRuns, mapSuggestions, mapThreads } from '../../lib/agentMappers';
+import { migrateLegacyAgentData } from '../../lib/agentMigration';
 interface AgentPanelProps {
   zone: WidgetZone;
   panelGroupRef: React.RefObject<ImperativePanelGroupHandle>;
@@ -32,10 +40,11 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ zone, panelGroupRef }) =
     threads,
     pendingSuggestions,
     openAgentChat,
-    openAgentChatForRun,
     clearRunHistory,
     applySuggestion,
     rejectSuggestion,
+    hydrateFromServer,
+    setConnectionStatus,
   } = useAgentStore(
     useShallow((s) => ({
       connectionStatus: s.connectionStatus,
@@ -44,10 +53,11 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ zone, panelGroupRef }) =
       threads: s.threads,
       pendingSuggestions: s.pendingSuggestions,
       openAgentChat: s.openAgentChat,
-      openAgentChatForRun: s.openAgentChatForRun,
       clearRunHistory: s.clearRunHistory,
       applySuggestion: s.applySuggestion,
       rejectSuggestion: s.rejectSuggestion,
+      hydrateFromServer: s.hydrateFromServer,
+      setConnectionStatus: s.setConnectionStatus,
     }))
   );
   const replaceRange = useDocumentStore((s) => s.replaceRange);
@@ -60,6 +70,8 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ zone, panelGroupRef }) =
   );
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const [busySuggestionId, setBusySuggestionId] = useState<string | null>(null);
+  const migrationAttemptedRef = useRef(false);
   const menuRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -70,6 +82,61 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ zone, panelGroupRef }) =
     if (menuOpen) document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [menuOpen]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const sync = async () => {
+      if (!isAgentBackendEnabled()) {
+        setConnectionStatus('error', 'Supabase or agent backend is not configured.');
+        return;
+      }
+      try {
+        const status = await getOpenClawAgentStatus();
+        if (!status.connected) {
+          hydrateFromServer({ threads: [], runHistory: [], pendingSuggestions: [] });
+          setConnectionStatus('disconnected', status.mapping?.connection_error ?? null);
+          return;
+        }
+
+        if (!migrationAttemptedRef.current) {
+          migrationAttemptedRef.current = true;
+          const localState = useAgentStore.getState();
+          await migrateLegacyAgentData({
+            threads: localState.threads,
+            runs: localState.runHistory,
+            suggestions: localState.pendingSuggestions,
+          });
+        }
+        const state = await fetchAgentState('agent');
+        if (cancelled) return;
+        const threadsMapped = mapThreads(state.threads, state.messages);
+        const runsMapped = mapRuns(state.runs);
+        const suggestionsMapped = mapSuggestions(state.suggestions);
+        const runIdsByThread = runsMapped.reduce<Record<string, string[]>>((acc, run) => {
+          if (!run.threadId) return acc;
+          if (!acc[run.threadId]) acc[run.threadId] = [];
+          acc[run.threadId].push(run.id);
+          return acc;
+        }, {});
+        const hydratedThreads = threadsMapped.map((t) => ({
+          ...t,
+          runIds: runIdsByThread[t.id] ?? [],
+        }));
+        hydrateFromServer({
+          threads: hydratedThreads,
+          runHistory: runsMapped,
+          pendingSuggestions: suggestionsMapped,
+        });
+        setConnectionStatus('connected');
+      } catch (error) {
+        setConnectionStatus('error', error instanceof Error ? error.message : 'Failed to sync agent state');
+      }
+    };
+    void sync();
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrateFromServer, setConnectionStatus]);
 
   const isLeft = zone === 'left';
   const chevronIcon = isCollapsed
@@ -189,13 +256,13 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ zone, panelGroupRef }) =
             )}
 
             {/* Pending suggestions (apply/reject) */}
-            {pendingSuggestions.filter((p) => p.status === 'pending').length > 0 && (
+            {pendingSuggestions.filter((p) => p.status === 'pending' || p.status === 'needs_confirmation').length > 0 && (
               <div className="shrink-0 mb-4 space-y-2">
                 <div className="text-xs font-medium text-neutral-500 dark:text-neutral-textMuted mb-1">
                   Suggestions
                 </div>
                 {pendingSuggestions
-                  .filter((p) => p.status === 'pending')
+                  .filter((p) => p.status === 'pending' || p.status === 'needs_confirmation')
                   .map((sug) => (
                     <div
                       key={sug.id}
@@ -212,11 +279,20 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ zone, panelGroupRef }) =
                           variant="outline"
                           size="sm"
                           className="!py-1 !px-2 text-xs"
-                          onClick={() => {
-                            if (sug.target && sug.replacement != null) {
-                              replaceRange(sug.target.from, sug.target.to, sug.replacement);
+                          disabled={busySuggestionId === sug.id}
+                          onClick={async () => {
+                            try {
+                              setBusySuggestionId(sug.id);
+                              if (sug.confirmationToken) {
+                                await confirmAgentSuggestion(sug.id, sug.confirmationToken);
+                              }
+                              if (sug.target && sug.replacement != null) {
+                                replaceRange(sug.target.from, sug.target.to, sug.replacement);
+                              }
+                              applySuggestion(sug.id);
+                            } finally {
+                              setBusySuggestionId(null);
                             }
-                            applySuggestion(sug.id);
                           }}
                         >
                           <Check className="w-3 h-3 mr-0.5" />
@@ -226,7 +302,18 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({ zone, panelGroupRef }) =
                           variant="ghost"
                           size="sm"
                           className="!py-1 !px-2 text-xs"
-                          onClick={() => rejectSuggestion(sug.id)}
+                          disabled={busySuggestionId === sug.id}
+                          onClick={async () => {
+                            try {
+                              setBusySuggestionId(sug.id);
+                              if (sug.confirmationToken) {
+                                await rejectAgentSuggestion(sug.id);
+                              }
+                              rejectSuggestion(sug.id);
+                            } finally {
+                              setBusySuggestionId(null);
+                            }
+                          }}
                         >
                           <X className="w-3 h-3 mr-0.5" />
                           Reject

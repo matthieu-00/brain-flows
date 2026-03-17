@@ -6,10 +6,17 @@ import { CollapsibleSection } from '../ui/CollapsibleSection';
 import { useLayoutStore } from '../../store/layoutStore';
 import { useUIStore } from '../../store/uiStore';
 import { AppSettings } from '../../types';
-import { getOpenAIKeyError, getWeatherKeyError } from '../../utils/apiKeyValidation';
+import { getWeatherKeyError } from '../../utils/apiKeyValidation';
 import { KeyboardShortcutsSection } from '../ui/KeyboardShortcutsSection';
 import { User, Camera, ExternalLink, Bot, LayoutGrid } from 'lucide-react';
 import { useAgentStore } from '../../store/agentStore';
+import {
+  connectOpenClawAgent,
+  disconnectOpenClawAgent,
+  getOpenClawAgentStatus,
+  isAgentBackendEnabled,
+  type OpenClawAgentMapping,
+} from '../../lib/agentClient';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -20,23 +27,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   const { settings, updateSettings, widgets, resetLayout } = useLayoutStore();
   const openWidgetModal = useUIStore((state) => state.openWidgetModal);
   const { connectionStatus, setConnectionStatus } = useAgentStore();
-  const [openaiKey, setOpenaiKey] = useState(settings.apiKeys?.openai || '');
   const [weatherKey, setWeatherKey] = useState(settings.apiKeys?.weather || '');
-  const [keyErrors, setKeyErrors] = useState<{ openai?: string; weather?: string }>({});
+  const [keyErrors, setKeyErrors] = useState<{ weather?: string }>({});
   const [displayName, setDisplayName] = useState(settings.profile?.displayName || '');
   const [email, setEmail] = useState(settings.profile?.email || '');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [agentIdInput, setAgentIdInput] = useState('');
+  const [agentWorkspaceInput, setAgentWorkspaceInput] = useState('');
+  const [agentProfileInput, setAgentProfileInput] = useState('');
+  const [isConnectingAgent, setIsConnectingAgent] = useState(false);
+  const [agentMapping, setAgentMapping] = useState<OpenClawAgentMapping | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const hasAIChat = widgets.some((w) => w.type === 'ai-chat' && w.isEnabled);
   const hasWeather = widgets.some((w) => w.type === 'weather' && w.isEnabled);
 
   useEffect(() => {
     if (isOpen) {
-      setOpenaiKey(settings.apiKeys?.openai || '');
       setWeatherKey(settings.apiKeys?.weather || '');
       setDisplayName(settings.profile?.displayName || '');
       setEmail(settings.profile?.email || '');
@@ -45,13 +54,30 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
+      if (!isAgentBackendEnabled()) {
+        setConnectionStatus('error', 'Supabase or agent backend is not configured.');
+        setAgentMapping(null);
+        return;
+      }
+      void getOpenClawAgentStatus()
+        .then((status) => {
+          setAgentMapping(status.mapping);
+          setConnectionStatus(status.connected ? 'connected' : 'disconnected', status.mapping?.connection_error ?? null);
+          if (status.mapping?.agent_id) setAgentIdInput(status.mapping.agent_id);
+          if (status.mapping?.workspace_path) setAgentWorkspaceInput(status.mapping.workspace_path);
+          if (status.mapping?.auth_profile_ref) setAgentProfileInput(status.mapping.auth_profile_ref);
+        })
+        .catch((error) => {
+          setAgentMapping(null);
+          setConnectionStatus('error', error instanceof Error ? error.message : 'Unable to fetch agent status.');
+        });
     }
   }, [
     isOpen,
-    settings.apiKeys?.openai,
     settings.apiKeys?.weather,
     settings.profile?.displayName,
     settings.profile?.email,
+    setConnectionStatus,
   ]);
 
   const editorFontOptions = [
@@ -87,13 +113,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   };
 
   const handleSaveSettings = () => {
-    const openaiError = hasAIChat ? getOpenAIKeyError(openaiKey, true) : getOpenAIKeyError(openaiKey);
     const weatherError = hasWeather ? getWeatherKeyError(weatherKey, true) : getWeatherKeyError(weatherKey);
-    const hasKeyErrors = Boolean(openaiError || weatherError);
+    const hasKeyErrors = Boolean(weatherError);
 
     if (hasKeyErrors) {
       setKeyErrors({
-        openai: openaiError || undefined,
         weather: weatherError || undefined,
       });
       return;
@@ -114,7 +138,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
     updateSettings({
       apiKeys: {
         ...settings.apiKeys,
-        openai: openaiKey.trim() || settings.apiKeys?.openai,
         weather: weatherKey.trim() || settings.apiKeys?.weather,
       },
       profile: {
@@ -341,6 +364,27 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-sage-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-text"
               />
             </div>
+
+            <div className="pt-2 border-t border-neutral-200 dark:border-neutral-700 space-y-2">
+              <p className="text-sm font-medium text-neutral-900 dark:text-neutral-text">
+                Layout reset
+              </p>
+              <p className="text-xs text-neutral-500 dark:text-neutral-textMuted">
+                Reset all panel sizes to default and remove all widgets. You can add widgets again from the header or Manage widgets below.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => resetLayout()}
+                className="flex items-center gap-1.5"
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                Reset layout
+              </Button>
+              <p className="text-xs text-neutral-500 dark:text-neutral-textMuted">
+                You can also use the keyboard shortcut (see Keyboard shortcuts below). Default: Alt+0
+              </p>
+            </div>
           </div>
         </CollapsibleSection>
 
@@ -358,8 +402,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 <div>
                   <p className="font-medium text-neutral-900 dark:text-neutral-text">OpenClaw</p>
                   <p className="text-xs text-neutral-500 dark:text-neutral-textMuted">
-                    {connectionStatus === 'connected'
-                      ? 'Connected (prototype mode)'
+              {connectionStatus === 'connected'
+                      ? 'Connected'
                       : connectionStatus === 'error'
                         ? 'Connection error'
                         : 'Not connected'}
@@ -370,42 +414,86 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setConnectionStatus('disconnected')}
+                  onClick={async () => {
+                    setIsConnectingAgent(true);
+                    try {
+                      const status = await disconnectOpenClawAgent();
+                      setAgentMapping(status.mapping);
+                      setConnectionStatus('disconnected');
+                    } catch (error) {
+                      setConnectionStatus('error', error instanceof Error ? error.message : 'Could not disconnect agent.');
+                    } finally {
+                      setIsConnectingAgent(false);
+                    }
+                  }}
+                  disabled={isConnectingAgent}
                 >
                   Disconnect
                 </Button>
               ) : (
                 <Button
                   size="sm"
-                  onClick={() => setConnectionStatus('connected')}
+                  disabled={isConnectingAgent || !agentIdInput.trim()}
+                  onClick={async () => {
+                    if (!isAgentBackendEnabled()) {
+                      setConnectionStatus('error', 'Supabase is not configured.');
+                      return;
+                    }
+                    try {
+                      setIsConnectingAgent(true);
+                      const status = await connectOpenClawAgent({
+                        agentId: agentIdInput.trim(),
+                        workspacePath: agentWorkspaceInput.trim() || undefined,
+                        authProfileRef: agentProfileInput.trim() || undefined,
+                      });
+                      setAgentMapping(status.mapping);
+                      setConnectionStatus('connected');
+                    } catch (error) {
+                      setConnectionStatus(
+                        'error',
+                        error instanceof Error ? error.message : 'Could not connect to agent backend.'
+                      );
+                    } finally {
+                      setIsConnectingAgent(false);
+                    }
+                  }}
                 >
-                  Connect (prototype)
+                  Connect agent
                 </Button>
               )}
             </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <Input
+                label="Dedicated agent ID"
+                type="text"
+                value={agentIdInput}
+                onChange={(e) => setAgentIdInput(e.target.value)}
+                placeholder="user-agent-123"
+                hint="Required. Must be unique per app user."
+              />
+              <Input
+                label="Auth profile reference"
+                type="text"
+                value={agentProfileInput}
+                onChange={(e) => setAgentProfileInput(e.target.value)}
+                placeholder="anthropic:default"
+                hint="Optional OpenClaw auth profile alias."
+              />
+            </div>
+            <Input
+              label="Workspace path (optional)"
+              type="text"
+              value={agentWorkspaceInput}
+              onChange={(e) => setAgentWorkspaceInput(e.target.value)}
+              placeholder="/srv/openclaw/workspaces/user-123"
+            />
+            {agentMapping?.agent_id && (
+              <p className="text-xs text-neutral-500 dark:text-neutral-textMuted">
+                Connected mapping: `{agentMapping.agent_id}`{agentMapping.auth_profile_ref ? ` with profile ${agentMapping.auth_profile_ref}` : ''}
+              </p>
+            )}
             <p className="text-xs text-neutral-500 dark:text-neutral-textMuted">
-              In prototype mode, the agent runs locally with mock responses. Full OpenClaw account linking will be available when the backend is set up.
-            </p>
-          </div>
-        </CollapsibleSection>
-
-        {/* Layout reset */}
-        <CollapsibleSection title="Layout" defaultOpen={false}>
-          <div className="space-y-4">
-            <p className="text-sm text-neutral-600 dark:text-neutral-textMuted">
-              Reset all panel sizes to default and remove all widgets. You can add widgets again from the header or Manage widgets below.
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => resetLayout()}
-              className="flex items-center gap-1.5"
-            >
-              <LayoutGrid className="w-3.5 h-3.5" />
-              Reset layout
-            </Button>
-            <p className="text-xs text-neutral-500 dark:text-neutral-textMuted">
-              You can also use the keyboard shortcut (see Keyboard shortcuts below). Default: Alt+0
+              Each app user must map to a dedicated OpenClaw agent/workspace. Requests are blocked when no active mapping exists.
             </p>
           </div>
         </CollapsibleSection>
@@ -430,28 +518,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                 Manage widgets
               </Button>
             </div>
-
-            {/* API key fields shown only when relevant widgets are active */}
-            {hasAIChat && (
-              <Input
-                label="OpenAI API Key"
-                type="password"
-                value={openaiKey}
-                onChange={(e) => {
-                  setOpenaiKey(e.target.value);
-                  if (keyErrors.openai) setKeyErrors((prev) => ({ ...prev, openai: undefined }));
-                }}
-                onBlur={() => {
-                  setKeyErrors((prev) => ({
-                    ...prev,
-                    openai: getOpenAIKeyError(openaiKey) || undefined,
-                  }));
-                }}
-                placeholder="sk-..."
-                hint="Required for AI Chat"
-                error={keyErrors.openai}
-              />
-            )}
 
             {hasWeather && (
               <Input

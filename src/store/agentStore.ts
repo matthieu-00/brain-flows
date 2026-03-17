@@ -10,7 +10,17 @@ export interface AgentRunResult {
   id: string;
   type: 'suggestion' | 'citation' | 'spellcheck' | 'research' | 'message';
   summary: string;
-  status: 'pending' | 'ready' | 'applied' | 'dismissed';
+  status:
+    | 'pending'
+    | 'ready'
+    | 'applied'
+    | 'dismissed'
+    | 'queued'
+    | 'running'
+    | 'needs_confirmation'
+    | 'completed'
+    | 'failed'
+    | 'blocked';
   createdAt: string; // ISO
   payload?: unknown;
   /** Thread this run belongs to */
@@ -48,10 +58,11 @@ export interface PendingSuggestion {
   runId: string;
   description: string;
   /** Selection or range to apply to (optional for full-doc suggestions) */
-  target?: { from: number; to: number };
+  target?: { from: number; to: number; documentId?: string };
   /** Proposed content or patch */
   replacement?: string;
-  status: 'pending' | 'applied' | 'rejected';
+  status: 'pending' | 'needs_confirmation' | 'applied' | 'rejected' | 'blocked';
+  confirmationToken?: string;
 }
 
 interface AgentState {
@@ -80,6 +91,11 @@ interface AgentState {
   addPendingSuggestion: (suggestion: PendingSuggestion) => void;
   applySuggestion: (id: string) => void;
   rejectSuggestion: (id: string) => void;
+  hydrateFromServer: (payload: {
+    threads: AgentThread[];
+    runHistory: AgentRunResult[];
+    pendingSuggestions: PendingSuggestion[];
+  }) => void;
   clearRunHistory: () => void;
   getThreadByRunId: (runId: string) => AgentThread | undefined;
 }
@@ -177,6 +193,12 @@ export const useAgentStore = create<AgentState>()(
             p.id === id ? { ...p, status: 'rejected' as const } : p
           ),
         })),
+      hydrateFromServer: ({ threads, runHistory, pendingSuggestions }) =>
+        set({
+          threads,
+          runHistory,
+          pendingSuggestions,
+        }),
       clearRunHistory: () =>
         set({ runHistory: [], threads: [], currentThreadId: null }),
       getThreadByRunId: (runId) => {
