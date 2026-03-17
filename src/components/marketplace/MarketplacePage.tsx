@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Search, Check, Plus, Trash2, Key } from 'lucide-react';
+import { Search, Check, Plus, Trash2, Key, ArrowLeft } from 'lucide-react';
 import { useLayoutStore } from '../../store/layoutStore';
 import { widgetConfig, widgetCategories, widgetZones } from '../../constants/widgets';
 import type { WidgetCategory, WidgetZone } from '../../types';
@@ -8,6 +9,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 
 export const MarketplacePage: React.FC = () => {
+  const navigate = useNavigate();
   const { widgets, addWidget, removeWidget, settings, updateSettings } = useLayoutStore();
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState<WidgetCategory | 'all'>('all');
@@ -57,7 +59,22 @@ export const MarketplacePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-cream-50 dark:bg-neutral-950">
+    <div className="min-h-[calc(100vh-3.5rem)] bg-cream-50 dark:bg-neutral-950">
+      {/* Sticky bar under nav: back to writing always visible when scrolling */}
+      <div className="sticky top-14 z-30 bg-cream-50 dark:bg-neutral-950 border-b border-neutral-200 dark:border-neutral-800">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="font-body flex items-center gap-1.5 text-sm text-neutral-500 dark:text-neutral-textMuted hover:text-sage-700 dark:hover:text-sage-400 transition-colors focus:outline-none focus:ring-2 focus:ring-sage-700 dark:focus:ring-sage-500 rounded px-1 -ml-1 py-0.5"
+            aria-label="Back to writing"
+          >
+            <ArrowLeft className="w-4 h-4 shrink-0" />
+            Back to writing
+          </button>
+        </div>
+      </div>
+
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
         <div className="mb-8">

@@ -127,15 +127,21 @@ export const Header: React.FC = () => {
       <motion.header
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        className="bg-cream-50 dark:bg-neutral-800 border-b border-neutral-300 dark:border-neutral-700 shadow-sm sticky top-0 z-40"
+        className="bg-cream-50 dark:bg-neutral-800 border-b border-neutral-300 dark:border-neutral-700 shadow-sm sticky top-0 z-40 h-14"
       >
-        <div className="px-6 py-3 flex items-center justify-between">
+        <div className="px-6 h-full flex items-center justify-between">
           {/* Left side */}
           <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
+            <button
+              type="button"
+              onClick={() => navigate('/')}
+              className="flex items-center space-x-2 rounded-md -ml-1 px-1 py-0.5 hover:bg-neutral-100 dark:hover:bg-neutral-700/50 transition-colors focus:outline-none focus:ring-2 focus:ring-sage-700 dark:focus:ring-sage-500 focus:ring-offset-2 dark:focus:ring-offset-neutral-900"
+              title="Back to writing"
+              aria-label="Back to writing"
+            >
               <Signature className="w-6 h-6 text-sage-900 dark:text-sage-400" />
               <h1 className="font-display text-xl font-bold text-neutral-900 dark:text-neutral-text">brainsflow.io</h1>
-            </div>
+            </button>
             <button
               onClick={() => navigate('/marketplace')}
               className={`text-sm font-medium transition-colors flex items-center gap-1.5 ${
