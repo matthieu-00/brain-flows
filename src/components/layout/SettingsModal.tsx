@@ -8,7 +8,7 @@ import { useUIStore } from '../../store/uiStore';
 import { AppSettings } from '../../types';
 import { getOpenAIKeyError, getWeatherKeyError } from '../../utils/apiKeyValidation';
 import { KeyboardShortcutsSection } from '../ui/KeyboardShortcutsSection';
-import { User, Camera, ExternalLink, Bot } from 'lucide-react';
+import { User, Camera, ExternalLink, Bot, LayoutGrid } from 'lucide-react';
 import { useAgentStore } from '../../store/agentStore';
 
 interface SettingsModalProps {
@@ -17,7 +17,7 @@ interface SettingsModalProps {
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
-  const { settings, updateSettings, widgets } = useLayoutStore();
+  const { settings, updateSettings, widgets, resetLayout } = useLayoutStore();
   const openWidgetModal = useUIStore((state) => state.openWidgetModal);
   const { connectionStatus, setConnectionStatus } = useAgentStore();
   const [openaiKey, setOpenaiKey] = useState(settings.apiKeys?.openai || '');
@@ -385,6 +385,27 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
             </div>
             <p className="text-xs text-neutral-500 dark:text-neutral-textMuted">
               In prototype mode, the agent runs locally with mock responses. Full OpenClaw account linking will be available when the backend is set up.
+            </p>
+          </div>
+        </CollapsibleSection>
+
+        {/* Layout reset */}
+        <CollapsibleSection title="Layout" defaultOpen={false}>
+          <div className="space-y-4">
+            <p className="text-sm text-neutral-600 dark:text-neutral-textMuted">
+              Reset all panel sizes to default and remove all widgets. You can add widgets again from the header or Manage widgets below.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => resetLayout()}
+              className="flex items-center gap-1.5"
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              Reset layout
+            </Button>
+            <p className="text-xs text-neutral-500 dark:text-neutral-textMuted">
+              You can also use the keyboard shortcut (see Keyboard shortcuts below). Default: Alt+0
             </p>
           </div>
         </CollapsibleSection>

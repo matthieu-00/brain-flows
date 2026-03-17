@@ -55,8 +55,15 @@ const DrawingCanvasWidget: React.FC<DrawingCanvasWidgetProps> = ({ widget }) => 
     const observer = new ResizeObserver(entries => {
       for (const entry of entries) {
         const w = Math.floor(entry.contentRect.width);
-        if (w > 0) {
-          setCanvasSize({ width: w, height: Math.round(w / ASPECT_RATIO) });
+        const h = Math.floor(entry.contentRect.height);
+        if (w <= 0 || h <= 0) return;
+        // Fit canvas in container while keeping aspect ratio (width / height = ASPECT_RATIO).
+        const heightFromWidth = w / ASPECT_RATIO;
+        const widthFromHeight = h * ASPECT_RATIO;
+        if (heightFromWidth <= h) {
+          setCanvasSize({ width: w, height: Math.round(heightFromWidth) });
+        } else {
+          setCanvasSize({ width: Math.round(widthFromHeight), height: h });
         }
       }
     });
@@ -249,9 +256,9 @@ const DrawingCanvasWidget: React.FC<DrawingCanvasWidgetProps> = ({ widget }) => 
   }, []);
 
   return (
-    <div className="w-full h-full overflow-hidden font-body">
+    <div className="w-full h-full min-h-0 flex flex-col overflow-hidden font-body">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-2 mb-3 p-2.5 bg-neutral-50 dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700">
+      <div className="shrink-0 flex flex-wrap items-center gap-2 mb-3 p-2.5 bg-neutral-50 dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700">
         {/* Tools */}
         <div className="flex gap-1">
           <button
@@ -344,7 +351,7 @@ const DrawingCanvasWidget: React.FC<DrawingCanvasWidgetProps> = ({ widget }) => 
       </div>
 
       {/* Canvas */}
-      <div ref={containerRef} className="w-full">
+      <div ref={containerRef} className="flex-1 min-h-0 w-full flex items-center justify-center">
         <canvas
           ref={canvasRef}
           width={canvasSize.width}

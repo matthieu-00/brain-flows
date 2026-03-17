@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware';
 import { ImperativePanelGroupHandle } from 'react-resizable-panels';
-import { Widget, WidgetType, WidgetZone, LayoutConfig, AppSettings } from '../types';
+import { Widget, WidgetType, WidgetZone, type LayoutConfig, AppSettings } from '../types';
 import { dateReplacer, dateReviver } from '../utils/persistDates';
 
 /**
@@ -39,7 +39,7 @@ interface LayoutState {
   distractionFreeMode: boolean;
   
   // Widget management
-  addWidget: (type: WidgetType, zone: WidgetZone) => void;
+  addWidget: (type: WidgetType, zone: WidgetZone) => boolean;
   removeWidget: (widgetId: string) => void;
   updateWidget: (widgetId: string, updates: Partial<Widget>) => void;
   moveWidget: (widgetId: string, newZone: WidgetZone, newPosition: number) => void;
@@ -48,6 +48,7 @@ interface LayoutState {
   // Layout management
   updateLayoutConfig: (updates: Partial<LayoutConfig>) => void;
   handlePanelResize: (zone: WidgetZone, size: number) => void;
+  resetLayout: () => void;
   
   // Utility functions
   getWidgetsByZone: (zone: WidgetZone) => Widget[];
@@ -95,7 +96,6 @@ export const useLayoutStore = create<LayoutState>()(
     (set, get) => ({
       widgets: [
         { id: 'default-timer', type: 'timer', zone: 'right', isEnabled: true, isCollapsed: false, position: 0, size: 50, data: {} },
-        { id: 'default-sticky-notes', type: 'sticky-notes', zone: 'right', isEnabled: true, isCollapsed: false, position: 1, size: 50, data: {} },
         { id: 'default-ai-chat', type: 'ai-chat', zone: 'left', isEnabled: true, isCollapsed: false, position: 0, size: 50, data: {} },
       ],
       layoutConfig: defaultLayoutConfig,
@@ -103,20 +103,24 @@ export const useLayoutStore = create<LayoutState>()(
       distractionFreeMode: false,
 
       addWidget: (type: WidgetType, zone: WidgetZone) => {
+        const existingInZone = get().getWidgetsByZone(zone);
+        if (existingInZone.length > 0) return false;
+
         const newWidget: Widget = {
           id: `${type}-${Date.now()}`,
           type,
           zone,
           isEnabled: true,
           isCollapsed: false,
-          position: get().getWidgetsByZone(zone).length,
-          size: 50, // default 50% of zone
+          position: 0,
+          size: 50,
           data: {},
         };
 
         set(state => ({
           widgets: [...state.widgets, newWidget],
         }));
+        return true;
       },
 
       removeWidget: (widgetId: string) => {
@@ -160,7 +164,7 @@ export const useLayoutStore = create<LayoutState>()(
       },
 
       handlePanelResize: (zone: WidgetZone, size: number) => {
-        const collapseThreshold = 4;
+        const collapseThreshold = 5;
         set(state => {
           const isVertical = zone === 'top' || zone === 'bottom';
           const sizeKey = isVertical
@@ -187,10 +191,17 @@ export const useLayoutStore = create<LayoutState>()(
         });
       },
 
+      resetLayout: () => {
+        set({
+          widgets: [],
+          layoutConfig: { ...defaultLayoutConfig },
+        });
+      },
+
       toggleZoneCollapsedWithPanelGroup: (zone: WidgetZone, panelGroupRef: React.RefObject<ImperativePanelGroupHandle>) => {
         const panelGroup = panelGroupRef.current;
         if (!panelGroup) return;
-        const collapsedPct = 3;
+        const collapsedPct = 4;
         const minExpandedSize = zone === 'left' || zone === 'right' ? 20 : 14;
 
         // Get current layout and collapsed state
@@ -337,6 +348,25 @@ export const useLayoutStore = create<LayoutState>()(
           if (!('defaultFileType' in s)) s.defaultFileType = 'md';
           if (!('profile' in s)) s.profile = {};
           if (!('keyboardShortcuts' in s)) s.keyboardShortcuts = {};
+        }
+        // Enforce one widget per zone: keep first widget per zone by position
+        if (merged.widgets && Array.isArray(merged.widgets)) {
+          const byZone = new Map<WidgetZone, Widget[]>();
+          for (const w of merged.widgets as Widget[]) {
+            if (!w.zone || !w.isEnabled) continue;
+            const list = byZone.get(w.zone) ?? [];
+            list.push(w);
+            byZone.set(w.zone, list);
+          }
+          const onePerZone: Widget[] = [];
+          for (const zone of ['top', 'bottom', 'left', 'right'] as const) {
+            const list = byZone.get(zone) ?? [];
+            if (list.length > 0) {
+              const sorted = [...list].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+              onePerZone.push({ ...sorted[0], position: 0 });
+            }
+          }
+          merged.widgets = onePerZone;
         }
         return merged;
       },

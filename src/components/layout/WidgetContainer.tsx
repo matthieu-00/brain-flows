@@ -1,8 +1,9 @@
 import React, { Suspense, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { X, Minimize2, Maximize2 } from 'lucide-react';
+import { X, Maximize2 } from 'lucide-react';
 import { Widget } from '../../types';
 import { useLayoutStore } from '../../store/layoutStore';
+import { useUIStore } from '../../store/uiStore';
 import { widgetConfig, getWidgetComponent, getWidgetSizingSpec } from '../../constants/widgets';
 import { Button } from '../ui/Button';
 import { IconButton } from '../ui/IconButton';
@@ -19,7 +20,7 @@ const WidgetContainer: React.FC<WidgetContainerProps> = ({
   className = '',
 }) => {
   const removeWidget = useLayoutStore((state) => state.removeWidget);
-  const toggleWidgetCollapsed = useLayoutStore((state) => state.toggleWidgetCollapsed);
+  const openFocusedWidget = useUIStore((state) => state.openFocusedWidget);
   const sizingSpec = useMemo(() => getWidgetSizingSpec(widget.type), [widget.type]);
   const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
   const config = useMemo(() => widgetConfig.find(w => w.type === widget.type), [widget.type]);
@@ -28,18 +29,33 @@ const WidgetContainer: React.FC<WidgetContainerProps> = ({
   const isHorizontalZone = widget.zone === 'top' || widget.zone === 'bottom';
   const containerStyle = useMemo(() => {
     if (widget.isCollapsed) return { minHeight: '60px', height: '60px' };
+
+    const baseMinHeight = sizingSpec.minHeight ?? 200;
+    const stripMinHeight =
+      widget.zone === 'top'
+        ? sizingSpec.minHeightTop ?? baseMinHeight
+        : widget.zone === 'bottom'
+          ? sizingSpec.minHeightBottom ?? baseMinHeight
+          : baseMinHeight;
+
     const style: React.CSSProperties = {
-      minHeight: `${sizingSpec.minHeight ?? 200}px`,
+      minHeight: `${stripMinHeight}px`,
       height: 'auto',
     };
+
     if (isHorizontalZone && sizingSpec.minWidth) {
       style.minWidth = `${sizingSpec.minWidth}px`;
     }
-    if (sizingSpec.maxHeight) {
+
+    const stripMaxHeight = sizingSpec.maxHeightTopBottom;
+    if (isHorizontalZone && stripMaxHeight) {
+      style.maxHeight = `${stripMaxHeight}px`;
+    } else if (sizingSpec.maxHeight) {
       style.maxHeight = `${sizingSpec.maxHeight}px`;
     }
+
     return style;
-  }, [widget.isCollapsed, sizingSpec, isHorizontalZone]);
+  }, [widget.isCollapsed, sizingSpec, isHorizontalZone, widget.zone]);
 
   const widgetDisplayName = config?.name || 'Widget';
 
@@ -60,14 +76,11 @@ const WidgetContainer: React.FC<WidgetContainerProps> = ({
         
         <div className="flex items-center space-x-1">
           <IconButton
-            label={widget.isCollapsed ? `Expand ${widgetDisplayName}` : `Collapse ${widgetDisplayName}`}
-            onClick={() => toggleWidgetCollapsed(widget.id)}
+            label={`Open ${widgetDisplayName} in focus view`}
+            onClick={() => openFocusedWidget(widget.id)}
+            aria-label={`Open ${widgetDisplayName} in focus view`}
           >
-            {widget.isCollapsed ? (
-              <Maximize2 className="w-3 h-3" />
-            ) : (
-              <Minimize2 className="w-3 h-3" />
-            )}
+            <Maximize2 className="w-3 h-3" />
           </IconButton>
 
           <IconButton

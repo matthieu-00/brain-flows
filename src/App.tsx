@@ -11,6 +11,7 @@ import { MainLayout } from './components/layout/MainLayout';
 import { OfflineBanner } from './components/OfflineBanner';
 import { WidgetManagementModal } from './components/modals/WidgetManagementModal';
 import { AgentChatModal } from './components/agent/AgentChatModal';
+import { FocusedWidgetModal } from './components/layout/FocusedWidgetModal';
 import { MarketplacePage } from './components/marketplace/MarketplacePage';
 import { ToastContainer } from './components/ui/Toast';
 
@@ -97,7 +98,7 @@ function App() {
       {!isOnline && <OfflineBanner />}
       <Header />
       <Routes>
-        <Route path="/" element={<><MainLayout /><WidgetManagementModal /><AgentChatModal /></>} />
+        <Route path="/" element={<><MainLayout /><WidgetManagementModal /><AgentChatModal /><FocusedWidgetModal /></>} />
         <Route path="/marketplace" element={<MarketplacePage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -131,7 +131,7 @@ export const WidgetManagementModal: React.FC = () => {
   };
 
   const isZoneAvailable = (zone: WidgetZone) => {
-    return widgetCountInZone(zone) < 3;
+    return widgetCountInZone(zone) < 1;
   };
 
   const getExistingWidgetTypes = () => {

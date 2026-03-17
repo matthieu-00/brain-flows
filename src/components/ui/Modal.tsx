@@ -8,7 +8,7 @@ interface ModalProps {
   onClose: () => void;
   title?: string;
   children: React.ReactNode;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'focus';
   /** When set, focus this element when the modal opens instead of the first focusable (e.g. close button). */
   initialFocusRef?: React.RefObject<HTMLElement | null>;
 }
@@ -78,6 +78,7 @@ export const Modal: React.FC<ModalProps> = ({
     md: 'max-w-lg',
     lg: 'max-w-2xl',
     xl: 'max-w-4xl',
+    focus: 'max-w-[min(90vw,56rem)] max-h-[90vh] flex flex-col',
   };
 
   return (
@@ -90,7 +91,7 @@ export const Modal: React.FC<ModalProps> = ({
           aria-label={title}
           data-modal="true"
         >
-          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0 relative z-10">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 sm:p-6 relative z-10">
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -107,11 +108,11 @@ export const Modal: React.FC<ModalProps> = ({
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className={`inline-block w-full ${sizeClasses[size]} p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-neutral-surface shadow-xl rounded-2xl relative z-10`}
+              className={`w-full ${size === 'focus' ? 'flex flex-col' : 'inline-block'} ${sizeClasses[size]} p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white dark:bg-neutral-surface shadow-xl rounded-2xl relative z-10`}
             >
               {/* Header */}
               {title && (
-                <div className="flex items-center justify-between mb-6">
+                <div className={`flex items-center justify-between mb-6 ${size === 'focus' ? 'shrink-0' : ''}`}>
                   <h2 className="font-display text-lg font-semibold text-neutral-900 dark:text-neutral-text">
                     {title}
                   </h2>
@@ -128,7 +129,7 @@ export const Modal: React.FC<ModalProps> = ({
               )}
 
               {/* Content */}
-              <div className="space-y-4">
+              <div className={size === 'focus' ? 'flex-1 min-h-0 flex flex-col' : 'space-y-4'}>
                 {children}
               </div>
             </motion.div>

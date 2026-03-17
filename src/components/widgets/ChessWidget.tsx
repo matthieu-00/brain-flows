@@ -41,7 +41,9 @@ const ChessWidget: React.FC<ChessWidgetProps> = ({ widget }) => {
     const observer = new ResizeObserver(entries => {
       for (const entry of entries) {
         const w = entry.contentRect.width;
-        setBoardSize(Math.max(150, Math.floor(w)));
+        const h = entry.contentRect.height;
+        const side = Math.max(150, Math.min(Math.floor(w), Math.floor(h)));
+        setBoardSize(side);
       }
     });
     observer.observe(el);
@@ -157,9 +159,9 @@ const ChessWidget: React.FC<ChessWidgetProps> = ({ widget }) => {
   const squareSize = boardSize / 8;
 
   return (
-    <div className="w-full h-full overflow-hidden font-body">
+    <div className="w-full h-full min-h-0 flex flex-col overflow-hidden font-body">
       {/* Controls */}
-      <div className="flex items-center justify-end mb-3">
+      <div className="flex shrink-0 items-center justify-end mb-3">
         <Button onClick={resetGame} variant="secondary" size="sm" title="New Game">
           <RotateCcw className="w-4 h-4 mr-1" />
           New Game
@@ -167,7 +169,7 @@ const ChessWidget: React.FC<ChessWidgetProps> = ({ widget }) => {
       </div>
 
       {/* Game Status */}
-      <div className="mb-3 p-2.5 bg-sage-100 dark:bg-sage-400/20 rounded-lg">
+      <div className="shrink-0 mb-3 p-2.5 bg-sage-100 dark:bg-sage-400/20 rounded-lg">
         <p className="text-sm font-medium text-sage-900 dark:text-sage-200 font-display">
           {getGameStatus()}
         </p>
@@ -181,7 +183,7 @@ const ChessWidget: React.FC<ChessWidgetProps> = ({ widget }) => {
       {/* Board */}
       <div
         ref={boardContainerRef}
-        className="w-full flex items-center justify-center"
+        className="flex-1 min-h-0 w-full flex items-center justify-center"
       >
         <div
           className="relative border-2 border-neutral-400 dark:border-neutral-600 rounded-lg overflow-hidden shadow-md"
@@ -293,7 +295,7 @@ const ChessWidget: React.FC<ChessWidgetProps> = ({ widget }) => {
 
       {/* Move History */}
       {game.history().length > 0 && (
-        <div className="mt-3 p-2.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg max-h-24 overflow-y-auto">
+        <div className="shrink-0 mt-3 p-2.5 bg-neutral-100 dark:bg-neutral-800 rounded-lg max-h-24 overflow-y-auto">
           <p className="text-xs font-medium text-neutral-700 dark:text-neutral-300 mb-1 font-display">
             Move History
           </p>

@@ -20,6 +20,11 @@ interface UIState {
   confirmDialogAction: (() => void) | null;
   openConfirmDialog: (message: string, action: () => void) => void;
   closeConfirmDialog: () => void;
+
+  // Focused widget modal
+  focusedWidgetId: string | null;
+  openFocusedWidget: (widgetId: string) => void;
+  closeFocusedWidget: () => void;
 }
 
 export const useUIStore = create<UIState>((set, get) => ({
@@ -31,6 +36,7 @@ export const useUIStore = create<UIState>((set, get) => ({
   showConfirmDialog: false,
   confirmDialogMessage: '',
   confirmDialogAction: null,
+  focusedWidgetId: null,
 
   // Modal actions
   openWidgetModal: (mode: 'add' | 'remove', zone?: WidgetZone) => {
@@ -88,5 +94,13 @@ export const useUIStore = create<UIState>((set, get) => ({
       confirmDialogMessage: '',
       confirmDialogAction: null,
     });
+  },
+
+  openFocusedWidget: (widgetId: string) => {
+    set({ focusedWidgetId: widgetId });
+  },
+
+  closeFocusedWidget: () => {
+    set({ focusedWidgetId: null });
   },
 }));

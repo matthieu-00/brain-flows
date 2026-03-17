@@ -41,11 +41,30 @@ export type WidgetOverflowBehavior = 'scroll' | 'hidden' | 'visible';
 
 export interface WidgetSizingSpec {
   fitMode: WidgetFitMode;
+  /**
+   * Base minimum width in pixels, primarily used for side panels (left/right).
+   */
   minWidth?: number;
+  /**
+   * Base minimum height in pixels, primarily used for side panels (left/right).
+   */
   minHeight?: number;
+  /**
+   * Optional maximum height for the widget in pixels.
+   */
   maxHeight?: number;
   preferredAspectRatio?: number;
   overflowBehavior: WidgetOverflowBehavior;
+  /**
+   * Optional overrides for strip zones (top/bottom) so we can keep those panels
+   * more compact without affecting side panel behavior.
+   */
+  minHeightTop?: number;
+  minHeightBottom?: number;
+  /**
+   * Shared cap for top/bottom when rendered in strip mode.
+   */
+  maxHeightTopBottom?: number;
 }
 
 export interface Widget {
@@ -87,7 +106,8 @@ export type ShortcutId =
   | 'distractionFree'
   | 'agentChat'
   | 'widgetAdd'
-  | 'widgetRemove';
+  | 'widgetRemove'
+  | 'resetLayout';
 
 export interface AppSettings {
   theme: 'light' | 'dark' | 'system';

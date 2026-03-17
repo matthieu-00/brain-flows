@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ImperativePanelGroupHandle } from 'react-resizable-panels';
 import { useShallow } from 'zustand/react/shallow';
 import { useLayoutStore } from '../../store/layoutStore';
@@ -75,18 +75,23 @@ export const WidgetZone: React.FC<WidgetZoneProps> = ({ zone, className, panelGr
     }
   };
 
-  // Chevron on panel border (edge adjacent to resize handle)
-  // Left/right zones inset to avoid overlapping with scrollbar
+  // Chevron on panel border (edge adjacent to resize handle).
+  // When expanded: pin to the edge (bottom of top panel, top of bottom) so it's out of the way and shows on hover.
+  // When collapsed: center in the thin strip so the 28px button isn't cut off.
   const getControlPosition = () => {
     switch (zone) {
       case 'left':
-        return 'right-4 top-1/2 -translate-y-1/2';
+        return 'right-0 top-1/2 -translate-y-1/2';
       case 'right':
-        return 'left-4 top-1/2 -translate-y-1/2';
+        return 'left-0 top-1/2 -translate-y-1/2';
       case 'top':
-        return 'bottom-0 left-1/2 -translate-x-1/2';
+        return isCollapsed
+          ? 'top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2'
+          : 'bottom-0 left-1/2 -translate-x-1/2';
       case 'bottom':
-        return 'top-0 left-1/2 -translate-x-1/2';
+        return isCollapsed
+          ? 'top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2'
+          : 'top-0 left-1/2 -translate-x-1/2';
       default:
         return 'right-0 top-1/2 -translate-y-1/2';
     }
@@ -108,7 +113,7 @@ export const WidgetZone: React.FC<WidgetZoneProps> = ({ zone, className, panelGr
     : '!bg-transparent hover:!bg-sage-100 dark:hover:!bg-neutral-800';
 
   return (
-    <div className={`h-full bg-cream-100 dark:bg-neutral-surface border-neutral-300 dark:border-neutral-700 relative group ${className}`}>
+    <div className={`h-full bg-cream-100 dark:bg-neutral-surface border-neutral-300 dark:border-neutral-700 relative group overflow-visible ${className}`}>
       {/* Chevron on panel border - collapse/expand */}
       <div
         className={`
@@ -168,16 +173,6 @@ export const WidgetZone: React.FC<WidgetZoneProps> = ({ zone, className, panelGr
                     className={zone === 'top' || zone === 'bottom' ? 'flex-1' : 'w-full'}
                   />
                 ))}
-                {widgets.length < 3 && (
-                  <button
-                    onClick={() => openWidgetModal('add', zone)}
-                    className="w-full py-2 flex items-center justify-center gap-1.5 text-xs text-neutral-400 dark:text-neutral-textMuted hover:text-sage-700 dark:hover:text-sage-400 border border-dashed border-neutral-300 dark:border-neutral-700 rounded-lg hover:border-sage-400 dark:hover:border-sage-600 transition-colors"
-                    aria-label={`Add another widget to ${zone} zone`}
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    Add widget
-                  </button>
-                )}
               </div>
             )}
           </motion.div>

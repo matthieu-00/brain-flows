@@ -41,6 +41,9 @@ function dispatchShortcut(id: ShortcutId): void {
     case 'widgetRemove':
       useUIStore.getState().openWidgetModal('remove');
       break;
+    case 'resetLayout':
+      useLayoutStore.getState().resetLayout();
+      break;
     default:
       break;
   }

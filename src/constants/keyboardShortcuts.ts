@@ -8,6 +8,7 @@ export const DEFAULT_KEYBOARD_SHORTCUTS: Record<ShortcutId, string> = {
   agentChat: 'Ctrl+J',
   widgetAdd: 'Alt++',
   widgetRemove: 'Alt+-',
+  resetLayout: 'Alt+0',
 };
 
 /** Modifier order for consistent formatting: Ctrl, Alt, Shift, Meta, then key. */
@@ -91,4 +92,5 @@ export const SHORTCUT_LABELS: Record<ShortcutId, string> = {
   agentChat: 'Open AI agent chat',
   widgetAdd: 'Add widget',
   widgetRemove: 'Remove widget',
+  resetLayout: 'Reset layout (panels + widgets)',
 };
